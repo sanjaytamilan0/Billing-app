@@ -162,7 +162,31 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 ]
 ```
 
-### 3.8 Create Note
+### 3.8 Create Category (Owner/Staff Only)
+- **URL**: `/api/categories`
+- **Method**: `POST`
+- **Request Body**:
+```json
+{
+    "name": "Electronics"
+}
+```
+
+### 3.9 List Categories
+- **URL**: `/api/categories`
+- **Method**: `GET`
+- **Response**:
+```json
+[
+    {
+        "_id": "663b...",
+        "name": "Electronics",
+        "companyName": "My Shop"
+    }
+]
+```
+
+### 3.10 Create Note
 - **URL**: `/api/notes`
 - **Method**: `POST`
 - **Request Body**:

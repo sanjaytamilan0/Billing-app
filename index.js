@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Note = require('./models/Note');
 const Product = require('./models/Product');
+const Category = require('./models/Category');
 const auth = require('./middleware/auth');
 const QRCode = require('qrcode');
 
@@ -295,6 +296,51 @@ app.get('/api/products', auth, async (req, res) => {
 
         const products = await Product.find(query).populate('createdBy', 'phone role');
         res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Category Management APIs ---
+
+// 12. Create Category (Owner/Staff only)
+app.post('/api/categories', auth, async (req, res) => {
+    try {
+        const { name } = req.body;
+        const currentUser = req.user;
+
+        // Only super_admin, owner, or staff can create categories
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const category = new Category({
+            name,
+            companyName: currentUser.companyName,
+            createdBy: currentUser._id
+        });
+
+        await category.save();
+        res.status(201).json({ message: 'Category created successfully', category });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 13. List Categories (Role-based)
+app.get('/api/categories', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        let query = {};
+
+        if (currentUser.role === 'super_admin') {
+            query = {};
+        } else {
+            query = { companyName: currentUser.companyName };
+        }
+
+        const categories = await Category.find(query);
+        res.status(200).json(categories);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
