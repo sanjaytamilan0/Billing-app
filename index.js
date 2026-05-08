@@ -16,6 +16,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+app.get('/hello', (req, res) => res.send('world'));
+
 // Middleware
 app.use(cors());
 app.use(express.json());
