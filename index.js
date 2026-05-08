@@ -49,6 +49,15 @@ app.get('/api/public/roles', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const { phone, password, role, companyName } = req.body;
+        
+        // Allowed roles for registration
+        const allowedRoles = ['super_admin', 'owner', 'user'];
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({ 
+                message: 'Invalid role. Only super_admin, owner, and user are allowed to register.' 
+            });
+        }
+
         const user = new User({ 
             phone, 
             password, 
