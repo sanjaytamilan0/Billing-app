@@ -261,7 +261,12 @@ app.post('/api/products', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied' });
         }
 
+        // Generate unique 16-character product code
+        const productCode = Math.random().toString(36).substring(2, 10).toUpperCase() + 
+                            Math.random().toString(36).substring(2, 10).toUpperCase();
+
         const product = new Product({
+            productCode,
             name,
             price,
             category,
@@ -271,9 +276,8 @@ app.post('/api/products', auth, async (req, res) => {
             creatorRole: currentUser.role
         });
 
-        // Generate QR Code (contains product ID and name)
-        const qrData = JSON.stringify({ id: product._id, name: product.name, company: product.companyName });
-        product.qrCode = await QRCode.toDataURL(qrData);
+        // Generate QR Code using ONLY the short product code
+        product.qrCode = await QRCode.toDataURL(productCode);
 
         await product.save();
         res.status(201).json({ message: 'Product created successfully', product });
@@ -282,7 +286,24 @@ app.post('/api/products', auth, async (req, res) => {
     }
 });
 
-// 11. List Products (Role-based)
+// 11. Get Product by Code (For scanning)
+app.get('/api/products/code/:code', auth, async (req, res) => {
+    try {
+        const product = await Product.findOne({ productCode: req.params.code });
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        
+        // Ensure user belongs to the same company
+        if (req.user.role !== 'super_admin' && req.user.companyName !== product.companyName) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 12. List Products (Role-based)
 app.get('/api/products', auth, async (req, res) => {
     try {
         const currentUser = req.user;

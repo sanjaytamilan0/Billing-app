@@ -133,7 +133,7 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 ### 3.6 Create Product (Owner/Staff Only)
 - **URL**: `/api/products`
 - **Method**: `POST`
-- **Description**: Add a new product. A QR code is automatically generated and stored as a Base64 string.
+- **Description**: Add a new product. A **16-character unique code** is generated. The QR code contains only this code.
 - **Request Body**:
 ```json
 {
@@ -144,7 +144,22 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 }
 ```
 
-### 3.7 List Products
+### 3.7 Get Product by Code (Scan API)
+- **URL**: `/api/products/code/:code`
+- **Method**: `GET`
+- **Description**: Fetch product details by scanning the 16-character code from the QR code.
+- **Response**:
+```json
+{
+    "productCode": "A1B2C3D4E5F6G7H8",
+    "name": "Iced Latte",
+    "price": 4.50,
+    "category": "Coffee Shop",
+    "companyName": "My Cafe"
+}
+```
+
+### 3.8 List Products
 - **URL**: `/api/products`
 - **Method**: `GET`
 - **Description**: List products for your company.
