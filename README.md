@@ -101,7 +101,36 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 ]
 ```
 
-### 3.3 Create Note
+### 3.3 Create Staff (Owner/Super Admin Only)
+- **URL**: `/api/staff`
+- **Method**: `POST`
+- **Description**: Add a new staff member to the company.
+- **Request Body**:
+```json
+{
+    "phone": "1234567890",
+    "password": "staffpassword"
+}
+```
+
+### 3.4 Update Staff (Owner/Super Admin Only)
+- **URL**: `/api/staff/:id`
+- **Method**: `PUT`
+- **Request Body**:
+```json
+{
+    "phone": "1111111111",
+    "role": "staff",
+    "permissions": ["create_bill"]
+}
+```
+
+### 3.5 Delete Staff (Owner/Super Admin Only)
+- **URL**: `/api/staff/:id`
+- **Method**: `DELETE`
+- **Response**: `{ "message": "Staff deleted successfully" }`
+
+### 3.6 Create Note
 - **URL**: `/api/notes`
 - **Method**: `POST`
 - **Request Body**:

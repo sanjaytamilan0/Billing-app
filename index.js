@@ -139,7 +139,86 @@ app.get('/api/users', auth, async (req, res) => {
     }
 });
 
-// 6. Create Note API
+// --- Staff Management APIs (Owner/Super_Admin only) ---
+
+// 6. Create Staff
+app.post('/api/staff', auth, async (req, res) => {
+    try {
+        const { phone, password, companyName } = req.body;
+        const currentUser = req.user;
+
+        // Only super_admin or owner can create staff
+        if (currentUser.role !== 'super_admin' && currentUser.role !== 'owner') {
+            return res.status(403).json({ message: 'Access denied: Only owners can create staff' });
+        }
+
+        const staff = new User({
+            phone,
+            password,
+            role: 'staff',
+            // If super_admin, use companyName from body; if owner, use their own companyName
+            companyName: currentUser.role === 'super_admin' ? companyName : currentUser.companyName,
+            permissions: []
+        });
+
+        await staff.save();
+        res.status(201).json({ message: 'Staff created successfully', staff });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 7. Update Staff
+app.put('/api/staff/:id', auth, async (req, res) => {
+    try {
+        const { phone, role, companyName, permissions } = req.body;
+        const currentUser = req.user;
+        const staffId = req.params.id;
+
+        const staff = await User.findById(staffId);
+        if (!staff) return res.status(404).json({ message: 'Staff not found' });
+
+        // Authorization check: Must be super_admin OR the owner of the same company
+        if (currentUser.role !== 'super_admin' && 
+           (currentUser.role !== 'owner' || currentUser.companyName !== staff.companyName)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        if (phone) staff.phone = phone;
+        if (role) staff.role = role;
+        if (companyName && currentUser.role === 'super_admin') staff.companyName = companyName;
+        if (permissions) staff.permissions = permissions;
+
+        await staff.save();
+        res.status(200).json({ message: 'Staff updated successfully', staff });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 8. Delete Staff
+app.delete('/api/staff/:id', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const staffId = req.params.id;
+
+        const staff = await User.findById(staffId);
+        if (!staff) return res.status(404).json({ message: 'Staff not found' });
+
+        // Authorization check: Must be super_admin OR the owner of the same company
+        if (currentUser.role !== 'super_admin' && 
+           (currentUser.role !== 'owner' || currentUser.companyName !== staff.companyName)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        await User.findByIdAndDelete(staffId);
+        res.status(200).json({ message: 'Staff deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 9. Create Note API
 app.post('/api/notes', auth, async (req, res) => {
     try {
         const { title, content } = req.body;
