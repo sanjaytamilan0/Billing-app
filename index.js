@@ -267,7 +267,8 @@ app.post('/api/products', auth, async (req, res) => {
             category,
             description,
             companyName: currentUser.companyName,
-            createdBy: currentUser._id
+            createdBy: currentUser._id,
+            creatorRole: currentUser.role
         });
 
         // Generate QR Code (contains product ID and name)
