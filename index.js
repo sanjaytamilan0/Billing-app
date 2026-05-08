@@ -21,7 +21,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/ping', (req, res) => res.send('pong'));
+
 app.get('/', (req, res) => {
+    console.log('Request for root / received');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
