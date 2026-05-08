@@ -7,6 +7,8 @@ const User = require('./models/User');
 const Note = require('./models/Note');
 const Product = require('./models/Product');
 const Category = require('./models/Category');
+const Cart = require('./models/Cart');
+const Order = require('./models/Order');
 const auth = require('./middleware/auth');
 
 const app = express();
@@ -359,6 +361,111 @@ app.get('/api/categories', auth, async (req, res) => {
 
         const categories = await Category.find(query);
         res.status(200).json(categories);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Cart & Order Management APIs ---
+
+// 14. Add to Cart (Staff and User)
+app.post('/api/cart', auth, async (req, res) => {
+    try {
+        const { productId, quantity } = req.body;
+        const currentUser = req.user;
+
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        let cart = await Cart.findOne({ userId: currentUser._id });
+
+        if (!cart) {
+            cart = new Cart({
+                userId: currentUser._id,
+                companyName: currentUser.companyName,
+                items: []
+            });
+        }
+
+        // Check if product already in cart
+        const itemIndex = cart.items.findIndex(p => p.productId.toString() === productId);
+        if (itemIndex > -1) {
+            cart.items[itemIndex].quantity += quantity || 1;
+        } else {
+            cart.items.push({
+                productId,
+                name: product.name,
+                price: product.price,
+                quantity: quantity || 1
+            });
+        }
+
+        await cart.save();
+        res.status(200).json({ message: 'Item added to cart', cart });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 15. Get Cart
+app.get('/api/cart', auth, async (req, res) => {
+    try {
+        const cart = await Cart.findOne({ userId: req.user._id });
+        res.status(200).json(cart || { items: [] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 16. Create Order (Checkout)
+app.post('/api/orders', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const cart = await Cart.findOne({ userId: currentUser._id });
+
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ message: 'Cart is empty' });
+        }
+
+        const totalAmount = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        const order = new Order({
+            userId: currentUser._id,
+            userRole: currentUser.role,
+            companyName: currentUser.companyName,
+            items: cart.items,
+            totalAmount,
+            status: 'completed' // For basic testing, we mark it completed immediately
+        });
+
+        await order.save();
+        
+        // Clear the cart after order
+        await Cart.findOneAndDelete({ userId: currentUser._id });
+
+        res.status(201).json({ message: 'Order created successfully', order });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 17. List Orders (Role-based)
+app.get('/api/orders', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        let query = {};
+
+        if (currentUser.role === 'super_admin') {
+            query = {};
+        } else if (currentUser.role === 'owner') {
+            query = { companyName: currentUser.companyName };
+        } else {
+            // staff and user only see their own orders
+            query = { userId: currentUser._id };
+        }
+
+        const orders = await Order.find(query).sort({ createdAt: -1 });
+        res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

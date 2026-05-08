@@ -201,7 +201,35 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 ]
 ```
 
-### 3.10 Create Note
+### 3.10 Add to Cart
+- **URL**: `/api/cart`
+- **Method**: `POST`
+- **Request Body**:
+```json
+{
+    "productId": "663b...",
+    "quantity": 2
+}
+```
+
+### 3.11 Get My Cart
+- **URL**: `/api/cart`
+- **Method**: `GET`
+
+### 3.12 Create Order (Checkout)
+- **URL**: `/api/orders`
+- **Method**: `POST`
+- **Description**: Converts all items in your cart into a permanent order.
+
+### 3.13 List Orders
+- **URL**: `/api/orders`
+- **Method**: `GET`
+- **Description**: 
+    - `super_admin`: All orders.
+    - `owner`: All company orders.
+    - `staff/user`: Only their own orders.
+
+### 3.14 Create Note
 - **URL**: `/api/notes`
 - **Method**: `POST`
 - **Request Body**:
