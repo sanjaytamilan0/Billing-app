@@ -5,7 +5,9 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Note = require('./models/Note');
+const Product = require('./models/Product');
 const auth = require('./middleware/auth');
+const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -240,6 +242,59 @@ app.get('/api/notes', auth, async (req, res) => {
     try {
         const notes = await Note.find({ userId: req.userData.userId });
         res.status(200).json(notes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Product Management APIs ---
+
+// 10. Create Product (Owner/Staff only)
+app.post('/api/products', auth, async (req, res) => {
+    try {
+        const { name, price, category, description } = req.body;
+        const currentUser = req.user;
+
+        // Only super_admin, owner, or staff can create products
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const product = new Product({
+            name,
+            price,
+            category,
+            description,
+            companyName: currentUser.companyName,
+            createdBy: currentUser._id
+        });
+
+        // Generate QR Code (contains product ID and name)
+        const qrData = JSON.stringify({ id: product._id, name: product.name, company: product.companyName });
+        product.qrCode = await QRCode.toDataURL(qrData);
+
+        await product.save();
+        res.status(201).json({ message: 'Product created successfully', product });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 11. List Products (Role-based)
+app.get('/api/products', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        let query = {};
+
+        if (currentUser.role === 'super_admin') {
+            query = {};
+        } else {
+            // owner, staff, and user only see products from their company
+            query = { companyName: currentUser.companyName };
+        }
+
+        const products = await Product.find(query).populate('createdBy', 'phone role');
+        res.status(200).json(products);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

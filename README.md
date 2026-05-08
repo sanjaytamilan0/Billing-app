@@ -130,7 +130,39 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 - **Method**: `DELETE`
 - **Response**: `{ "message": "Staff deleted successfully" }`
 
-### 3.6 Create Note
+### 3.6 Create Product (Owner/Staff Only)
+- **URL**: `/api/products`
+- **Method**: `POST`
+- **Description**: Add a new product. A QR code is automatically generated and stored as a Base64 string.
+- **Request Body**:
+```json
+{
+    "name": "Iced Latte",
+    "price": 4.50,
+    "category": "Coffee Shop",
+    "description": "Premium Arabica beans with cold milk."
+}
+```
+
+### 3.7 List Products
+- **URL**: `/api/products`
+- **Method**: `GET`
+- **Description**: List products for your company.
+- **Response**:
+```json
+[
+    {
+        "_id": "663b...",
+        "name": "Iced Latte",
+        "price": 4.50,
+        "category": "Coffee Shop",
+        "qrCode": "data:image/png;base64,iVBORw0KG...",
+        "companyName": "My Cafe"
+    }
+]
+```
+
+### 3.8 Create Note
 - **URL**: `/api/notes`
 - **Method**: `POST`
 - **Request Body**:
