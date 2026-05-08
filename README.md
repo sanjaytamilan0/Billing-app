@@ -81,7 +81,27 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 }
 ```
 
-### 3.2 Create Note
+### 3.2 Get Users List
+- **URL**: `/api/users`
+- **Method**: `GET`
+- **Description**: List users based on the logged-in user's role.
+    - `super_admin`: Sees **all** users in the system.
+    - `owner`: Sees only users from the **same company**.
+    - Others: Receive a `403 Forbidden` error.
+- **Response**:
+```json
+[
+    {
+        "_id": "663b...",
+        "phone": "9876543210",
+        "role": "admin",
+        "companyName": "Tech Solutions",
+        "permissions": []
+    }
+]
+```
+
+### 3.3 Create Note
 - **URL**: `/api/notes`
 - **Method**: `POST`
 - **Request Body**:

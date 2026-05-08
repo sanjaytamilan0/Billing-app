@@ -13,6 +13,7 @@ module.exports = async (req, res, next) => {
         }
 
         req.userData = { userId: decodedToken.userId, role: decodedToken.role };
+        req.user = user; // Attach the full user object
         next();
     } catch (error) {
         return res.status(401).json({

@@ -106,7 +106,31 @@ app.post('/api/user/role', auth, async (req, res) => {
     }
 });
 
-// 5. Create Note API
+// 5. Get Users List (Role-based)
+app.get('/api/users', auth, async (req, res) => {
+    try {
+        let query = {};
+        const currentUser = req.user;
+
+        if (currentUser.role === 'super_admin') {
+            // super_admin sees everyone
+            query = {};
+        } else if (currentUser.role === 'owner') {
+            // owner sees only their company's users
+            query = { companyName: currentUser.companyName };
+        } else {
+            // Other roles are not allowed to see the list
+            return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
+        }
+
+        const users = await User.find(query).select('-password -token');
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 6. Create Note API
 app.post('/api/notes', auth, async (req, res) => {
     try {
         const { title, content } = req.body;
