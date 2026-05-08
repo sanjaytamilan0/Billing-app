@@ -28,14 +28,24 @@ mongoose.connect(process.env.MONGO_URL)
     })
     .catch(err => console.error('Could not connect to MongoDB', err));
 
-// Routes
+// --- Public APIs (No Auth) ---
 
 // 1. Basic Testing API
 app.get('/', (req, res) => {
     res.json({ message: 'Note API is working!' });
 });
 
-// 2. Register API
+// 2. List all unique roles in the system
+app.get('/api/public/roles', async (req, res) => {
+    try {
+        const roles = await User.distinct('role');
+        res.status(200).json(roles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 3. Register API
 app.post('/api/register', async (req, res) => {
     try {
         const { phone, password, role, companyName } = req.body;
@@ -79,7 +89,24 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 4. Create Note API (Protected)
+// --- Protected APIs (Auth Required) ---
+
+// 4. Update Current User Role
+app.post('/api/user/role', auth, async (req, res) => {
+    try {
+        const { role } = req.body;
+        const user = await User.findById(req.userData.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        
+        user.role = role;
+        await user.save();
+        res.status(200).json({ message: 'Role updated successfully', role: user.role });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 5. Create Note API
 app.post('/api/notes', auth, async (req, res) => {
     try {
         const { title, content } = req.body;
