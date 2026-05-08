@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing App | Premium Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* --- Auth Section --- */
+        #auth-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.75rem;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .toggle-link span {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* --- Dashboard Section --- */
+        #main-section {
+            display: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .badge {
+            background: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .price {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--success);
+            margin: 1rem 0;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: rgba(255,255,255,0.05);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.4rem;
+        }
+
+        /* --- Cart & Toast --- */
+        #cart-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4);
+            z-index: 100;
+        }
+
+        #toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--card-bg);
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <!-- Auth Section -->
+    <section id="auth-section">
+        <div class="auth-card" id="login-form">
+            <h1>Billing App</h1>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" id="login-phone" placeholder="9876543210">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="login-role">
+                    <option value="user">User</option>
+                    <option value="staff">Staff</option>
+                    <option value="owner">Owner</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+            <button onclick="login()">Login</button>
+            <div class="toggle-link">Don't have an account? <span onclick="toggleAuth()">Register</span></div>
+        </div>
+
+        <div class="auth-card hidden" id="register-form">
+            <h1>Register</h1>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" id="reg-phone" placeholder="9876543210">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="reg-password" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" id="reg-company" placeholder="My Shop">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="reg-role">
+                    <option value="user">User</option>
+                    <option value="owner">Owner</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+            <button onclick="register()">Create Account</button>
+            <div class="toggle-link">Already have an account? <span onclick="toggleAuth()">Login</span></div>
+        </div>
+    </section>
+
+    <!-- Main Dashboard Section -->
+    <section id="main-section" class="container">
+        <header>
+            <div class="user-info">
+                <h2 id="display-company">Shop Name</h2>
+                <span class="badge" id="display-role">Role</span>
+            </div>
+            <button onclick="logout()" style="width: auto; padding: 0.5rem 1rem; margin: 0; background: rgba(255,255,255,0.1)">Logout</button>
+        </header>
+
+        <div style="margin-bottom: 2rem;">
+            <h3>Product Catalog</h3>
+            <p style="color: var(--text-dim)">Scan or select items to add to cart</p>
+        </div>
+
+        <div class="grid" id="product-list">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <div style="margin-top: 4rem;">
+            <h3>Your Recent Orders</h3>
+            <div id="order-list" style="margin-top: 1rem;">
+                <!-- Orders will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <div id="cart-button" onclick="checkout()" class="hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+    </div>
+
+    <script>
+        const API_BASE = ''; // Same origin
+        let currentUser = null;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function toggleAuth() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+        }
+
+        async function login() {
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
+            const role = document.getElementById('login-role').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password, role })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data));
+                    initDashboard();
+                } else {
+                    showToast(data.message || 'Login failed');
+                }
+            } catch (e) {
+                showToast('Server error');
+            }
+        }
+
+        async function register() {
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+            const companyName = document.getElementById('reg-company').value;
+            const role = document.getElementById('reg-role').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password, role, companyName })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('Registered! Please login.');
+                    toggleAuth();
+                } else {
+                    showToast(data.message || 'Registration failed');
+                }
+            } catch (e) {
+                showToast('Server error');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        async function initDashboard() {
+            currentUser = JSON.parse(localStorage.getItem('user'));
+            if (!currentUser) return;
+
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('main-section').style.display = 'block';
+            document.getElementById('display-company').innerText = currentUser.companyName || 'Billing Dashboard';
+            document.getElementById('display-role').innerText = currentUser.role;
+
+            loadProducts();
+            loadOrders();
+        }
+
+        async function loadProducts() {
+            const res = await fetch(`${API_BASE}/api/products`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const products = await res.json();
+            const list = document.getElementById('product-list');
+            list.innerHTML = products.map(p => `
+                <div class="card">
+                    <span class="tag">${p.category}</span>
+                    <h3 style="margin-top: 0.5rem">${p.name}</h3>
+                    <p class="price">$${p.price.toFixed(2)}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;">Code: ${p.productCode}</p>
+                    <button onclick="addToCart('${p._id}')">Add to Cart</button>
+                </div>
+            `).join('');
+        }
+
+        async function addToCart(productId) {
+            const res = await fetch(`${API_BASE}/api/cart`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ productId, quantity: 1 })
+            });
+            if (res.ok) {
+                showToast('Added to cart!');
+                document.getElementById('cart-button').classList.remove('hidden');
+            }
+        }
+
+        async function checkout() {
+            const res = await fetch(`${API_BASE}/api/orders`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.ok) {
+                showToast('Order successful!');
+                document.getElementById('cart-button').classList.add('hidden');
+                loadOrders();
+            }
+        }
+
+        async function loadOrders() {
+            const res = await fetch(`${API_BASE}/api/orders`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const orders = await res.json();
+            const list = document.getElementById('order-list');
+            list.innerHTML = orders.map(o => `
+                <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05)">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Order #${o._id.substring(18)}</span>
+                        <span style="color: var(--success)">$${o.totalAmount.toFixed(2)}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem;">
+                        Items: ${o.items.map(i => i.name).join(', ')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('token')) {
+            initDashboard();
+        }
+    </script>
+</body>
+</html>
