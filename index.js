@@ -91,6 +91,7 @@ app.post('/api/login', async (req, res) => {
             token, 
             userId: user._id, 
             role: user.role,
+            companyName: user.companyName,
             permissions: user.permissions || [] 
         });
     } catch (error) {
