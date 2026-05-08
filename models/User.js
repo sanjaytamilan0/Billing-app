@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema({
     companyName: {
         type: String,
         required: true
+    },
+    token: {
+        type: String
     }
 });
 
