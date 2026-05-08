@@ -16,7 +16,16 @@ app.use(express.json());
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URL)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(async () => {
+        console.log('Connected to MongoDB');
+        // Clean up old indexes if they exist
+        try {
+            await mongoose.connection.collections['users'].dropIndexes();
+            console.log('Old indexes cleaned up');
+        } catch (e) {
+            console.log('No old indexes to clean or already cleaned');
+        }
+    })
     .catch(err => console.error('Could not connect to MongoDB', err));
 
 // Routes
