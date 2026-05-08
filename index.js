@@ -29,8 +29,8 @@ app.get('/', (req, res) => {
 // 2. Register API
 app.post('/api/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
-        const user = new User({ username, password });
+        const { phone, password, role, companyName } = req.body;
+        const user = new User({ phone, password, role, companyName });
         await user.save();
         res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
@@ -41,17 +41,17 @@ app.post('/api/register', async (req, res) => {
 // 3. Login API
 app.post('/api/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
-        const user = await User.findOne({ username, password });
+        const { phone, password, role } = req.body;
+        const user = await User.findOne({ phone, password, role });
         if (!user) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials or role' });
         }
         const token = jwt.sign(
-            { userId: user._id },
+            { userId: user._id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
-        res.status(200).json({ token, userId: user._id });
+        res.status(200).json({ token, userId: user._id, role: user.role });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
