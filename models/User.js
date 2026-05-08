@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
     },
     token: {
         type: String
+    },
+    permissions: {
+        type: [String],
+        default: []
     }
 });
 

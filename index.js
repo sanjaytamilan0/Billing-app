@@ -30,7 +30,13 @@ app.get('/', (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const { phone, password, role, companyName } = req.body;
-        const user = new User({ phone, password, role, companyName });
+        const user = new User({ 
+            phone, 
+            password, 
+            role, 
+            companyName,
+            permissions: [] // Initialize with empty list
+        });
         await user.save();
         res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
@@ -53,7 +59,12 @@ app.post('/api/login', async (req, res) => {
         );
         user.token = token;
         await user.save();
-        res.status(200).json({ token, userId: user._id, role: user.role });
+        res.status(200).json({ 
+            token, 
+            userId: user._id, 
+            role: user.role,
+            permissions: user.permissions || [] 
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
