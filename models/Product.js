@@ -21,9 +21,6 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String
     },
-    qrCode: {
-        type: String // Base64 string
-    },
     companyName: {
         type: String,
         required: true

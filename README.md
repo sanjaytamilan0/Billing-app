@@ -168,10 +168,10 @@ This backend is built with Node.js, Express, MongoDB, and JWT Authentication.
 [
     {
         "_id": "663b...",
+        "productCode": "A1B2C3D4E5F6G7H8",
         "name": "Iced Latte",
         "price": 4.50,
         "category": "Coffee Shop",
-        "qrCode": "data:image/png;base64,iVBORw0KG...",
         "companyName": "My Cafe"
     }
 ]

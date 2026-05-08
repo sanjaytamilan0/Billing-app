@@ -8,7 +8,6 @@ const Note = require('./models/Note');
 const Product = require('./models/Product');
 const Category = require('./models/Category');
 const auth = require('./middleware/auth');
-const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -275,9 +274,6 @@ app.post('/api/products', auth, async (req, res) => {
             createdBy: currentUser._id,
             creatorRole: currentUser.role
         });
-
-        // Generate QR Code using ONLY the short product code
-        product.qrCode = await QRCode.toDataURL(productCode);
 
         await product.save();
         res.status(201).json({ message: 'Product created successfully', product });
