@@ -475,10 +475,10 @@ app.get('/api/orders', auth, async (req, res) => {
 
         if (currentUser.role === 'super_admin') {
             query = {};
-        } else if (currentUser.role === 'owner') {
+        } else if (currentUser.role === 'owner' || currentUser.role === 'staff') {
             query = { companyName: currentUser.companyName };
         } else {
-            // staff and user only see their own orders
+            // regular user only sees their own orders
             query = { userId: currentUser._id };
         }
 
