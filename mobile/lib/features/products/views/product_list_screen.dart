@@ -23,6 +23,11 @@ class ProductListScreen extends ConsumerWidget {
         title: const Text('Products'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () => Get.toNamed(Routes.cart),
+            tooltip: 'My Cart',
+          ),
+          IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () => Get.toNamed(Routes.profile),
             tooltip: 'My Profile',
