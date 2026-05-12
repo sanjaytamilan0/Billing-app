@@ -102,11 +102,14 @@ class OrderDetailScreen extends ConsumerWidget {
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
           onPressed: () async {
             try {
+              print('User clicking Pay Now for order ${order.id}...');
               await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'paid');
+              print('Pay Now API call finished successfully');
               ref.invalidate(ordersProvider);
               Get.back();
               Get.snackbar('Payment', 'Payment successful! Order status updated to Paid.');
             } catch (e) {
+              print('Pay Now API Error: $e');
               Get.snackbar('Error', e.toString());
             }
           },
