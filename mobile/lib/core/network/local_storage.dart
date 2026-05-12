@@ -33,6 +33,10 @@ class LocalStorage {
   String? getPhone() => _prefs.getString(_phoneKey);
   String? getCompanyName() => _prefs.getString(_companyKey);
 
+  Future<void> saveCompanyName(String name) async {
+    await _prefs.setString(_companyKey, name);
+  }
+
   Future<void> clear() async {
     await _prefs.clear();
   }

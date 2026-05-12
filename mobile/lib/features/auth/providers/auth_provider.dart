@@ -146,4 +146,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     await _storage.clear();
     state = const AsyncValue.data(null);
   }
+
+  void updateUserCompany(String companyName) {
+    if (state.value != null) {
+      state = AsyncValue.data(state.value!.copyWith(companyName: companyName));
+    }
+  }
 }

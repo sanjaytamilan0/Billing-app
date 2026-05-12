@@ -25,9 +25,20 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Determine initial route based on token
-    final token = ref.read(localStorageProvider).getToken();
-    final initialRoute = token != null ? Routes.products : Routes.login;
+    // Determine initial route based on token and role
+    final storage = ref.read(localStorageProvider);
+    final token = storage.getToken();
+    final role = storage.getRole();
+    final companyName = storage.getCompanyName();
+
+    String initialRoute = Routes.login;
+    if (token != null) {
+      if (role == 'user' && companyName == null) {
+        initialRoute = Routes.companySelection;
+      } else {
+        initialRoute = Routes.main;
+      }
+    }
 
     return GetMaterialApp(
       title: 'Billing App',

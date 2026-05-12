@@ -25,7 +25,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       next.whenOrNull(
         data: (user) {
           if (user != null) {
-            Get.offAllNamed(Routes.products);
+            if (user.role == 'user') {
+              Get.offAllNamed(Routes.companySelection);
+            } else {
+              Get.offAllNamed(Routes.main);
+            }
           }
         },
         error: (error, stack) {
@@ -37,97 +41,192 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: Skeletonizer(
-          enabled: authState.isLoading,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  'Welcome Back',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Login to manage your bills',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                TextField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: Icon(Icons.phone),
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedRole,
-                  decoration: const InputDecoration(labelText: 'Role'),
-                  items: ['super_admin', 'owner', 'staff', 'user']
-                      .map((role) => DropdownMenuItem(
-                            value: role,
-                            child: Text(role.replaceAll('_', ' ').capitalizeFirst!),
-                          ))
-                      .toList(),
-                  onChanged: (val) => setState(() => _selectedRole = val!),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: authState.isLoading
-                      ? null
-                      : () {
-                          ref.read(authStateProvider.notifier).login(
-                                _phoneController.text,
-                                _passwordController.text,
-                                _selectedRole,
-                              );
-                        },
-                  child: const Text('Login'),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Get.toNamed(Routes.register),
-                    child: const Text('Don\'t have an account? Register'),
-                  ),
-                ),
-                const Spacer(),
-                const Divider(),
-                const Text(
-                  'Quick Testing (Auto-fill)',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildTestChip('Admin', '1234567890', 'super_admin'),
-                    _buildTestChip('Owner', '9876543210', 'owner'),
-                    _buildTestChip('Staff', '5555555555', 'staff'),
-                    _buildTestChip('User', '0000000000', 'user'),
-                  ],
-                ),
-              ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Background Gradient Decor
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF6750A4).withOpacity(0.05),
+              ),
             ),
           ),
+          SafeArea(
+            child: Skeletonizer(
+              enabled: authState.isLoading,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 60),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6750A4).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.account_balance_wallet, size: 40, color: Color(0xFF6750A4)),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Welcome Back',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Login to your billing account',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    _buildTextField(
+                      controller: _phoneController,
+                      label: 'Phone Number',
+                      icon: Icons.phone_android_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: _passwordController,
+                      label: 'Password',
+                      icon: Icons.lock_outline_rounded,
+                      isPassword: true,
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      decoration: InputDecoration(
+                        labelText: 'Login as',
+                        prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.grey[200]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.grey[200]!),
+                        ),
+                      ),
+                      items: ['super_admin', 'owner', 'staff', 'user']
+                          .map((role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role.replaceAll('_', ' ').toUpperCase(), 
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedRole = val!),
+                    ),
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6750A4),
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0xFF6750A4).withOpacity(0.5),
+                        ),
+                        onPressed: authState.isLoading
+                            ? null
+                            : () {
+                                ref.read(authStateProvider.notifier).login(
+                                      _phoneController.text,
+                                      _passwordController.text,
+                                      _selectedRole,
+                                    );
+                              },
+                        child: const Text('SIGN IN', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Get.toNamed(Routes.register),
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: Colors.grey),
+                            children: [
+                              const TextSpan(text: "Don't have an account? "),
+                              TextSpan(
+                                text: "Register",
+                                style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    const Divider(),
+                    const Center(
+                      child: Text(
+                        'QUICK TESTING',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildTestChip('Admin', '1234567890', 'super_admin'),
+                          const SizedBox(width: 8),
+                          _buildTestChip('Owner', '6383266215', 'owner'),
+                          const SizedBox(width: 8),
+                          _buildTestChip('Staff', '6383266213', 'staff'),
+                          const SizedBox(width: 8),
+                          _buildTestChip('User', '6383266210', 'user'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey[200]!),
         ),
       ),
     );

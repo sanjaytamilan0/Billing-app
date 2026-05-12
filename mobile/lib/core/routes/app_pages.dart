@@ -8,6 +8,8 @@ import '../../features/orders/views/order_list_screen.dart';
 import '../../features/orders/views/order_detail_screen.dart';
 import '../../features/staff/views/staff_management_screen.dart';
 import '../../features/auth/views/profile_screen.dart';
+import '../../features/home/views/main_screen.dart';
+import '../../features/auth/views/company_selection_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -20,6 +22,14 @@ class AppPages {
     GetPage(
       name: Routes.register,
       page: () => const RegisterScreen(),
+    ),
+    GetPage(
+      name: Routes.companySelection,
+      page: () => const CompanySelectionScreen(),
+    ),
+    GetPage(
+      name: Routes.main,
+      page: () => const MainScreen(),
     ),
     GetPage(
       name: Routes.products,
@@ -55,6 +65,8 @@ class AppPages {
 abstract class Routes {
   static const login = '/login';
   static const register = '/register';
+  static const companySelection = '/company-selection';
+  static const main = '/main';
   static const products = '/products';
   static const addProduct = '/add-product';
   static const cart = '/cart';
