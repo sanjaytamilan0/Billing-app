@@ -61,6 +61,16 @@ app.get('/api/public/roles', async (req, res) => {
     }
 });
 
+// 2a. List all unique company names from owners
+app.get('/api/public/companies', async (req, res) => {
+    try {
+        const companies = await User.find({ role: 'owner' }).distinct('companyName');
+        res.status(200).json(companies);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 3. Register API
 app.post('/api/register', async (req, res) => {
     try {
