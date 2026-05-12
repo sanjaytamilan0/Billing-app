@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/order_provider.dart';
 import '../models/order_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/network/local_storage.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   const OrderDetailScreen({super.key});
+
+  Future<void> _downloadInvoice(WidgetRef ref, String orderId) async {
+    try {
+      final token = ref.read(localStorageProvider).getToken();
+      final url = Uri.parse('https://billing-app-k53w.onrender.com/api/orders/$orderId/invoice?token=$token');
+      
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Error', 'Could not launch invoice download URL');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to generate invoice: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,13 +29,31 @@ class OrderDetailScreen extends ConsumerWidget {
     final currentUser = ref.watch(authStateProvider).value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Order Details')),
+      appBar: AppBar(
+        title: const Text('Order Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () => _downloadInvoice(ref, order.id),
+            tooltip: 'Download Invoice',
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Order ID: ${order.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Order ID: ${order.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  onPressed: () => _downloadInvoice(ref, order.id),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
