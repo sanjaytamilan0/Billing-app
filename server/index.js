@@ -136,6 +136,26 @@ app.get('/api/me', auth, async (req, res) => {
     }
 });
 
+// 4a. Update User Company (For choosing a shop)
+app.put('/api/users/company', auth, async (req, res) => {
+    try {
+        const { companyName } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.companyName = companyName;
+        await user.save();
+
+        // Clear user's cart when they switch companies
+        await Cart.deleteMany({ userId: req.user._id });
+
+        res.status(200).json({ message: 'Company updated and cart cleared', user });
+    } catch (error) {
+        console.error('Update Company Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 5. Update Current User Role
 app.post('/api/user/role', auth, async (req, res) => {
     try {
