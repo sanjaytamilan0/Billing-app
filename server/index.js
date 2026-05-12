@@ -139,13 +139,10 @@ app.get('/api/users', auth, async (req, res) => {
         const currentUser = req.user;
 
         if (currentUser.role === 'super_admin') {
-            // super_admin sees everyone
             query = {};
         } else if (currentUser.role === 'owner') {
-            // owner sees only their company's users
             query = { companyName: currentUser.companyName };
         } else {
-            // Other roles are not allowed to see the list
             return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
         }
 
