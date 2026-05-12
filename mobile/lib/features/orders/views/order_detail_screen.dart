@@ -64,46 +64,42 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget _buildActionButtons(BuildContext context, WidgetRef ref, OrderModel order, user) {
     if (user == null) return const SizedBox();
 
-    if (user.role == 'user' && order.status == 'completed') {
-       // Server logic says status starts as 'completed' in testing, 
-       // but user wants a flow where user pays.
-       // Let's allow user to click 'Pay Now' if it's not 'paid' yet.
-       if (order.status != 'paid') {
-         return ElevatedButton(
-           onPressed: () async {
-             await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'paid');
-             ref.refresh(ordersProvider);
-             Get.back();
-             Get.snackbar('Success', 'Order marked as Paid');
-           },
-           child: const Text('Pay Now'),
-         );
-       }
+    final role = user.role.toLowerCase();
+    final status = order.status.toLowerCase();
+
+    // 1. User sees 'pending' and clicks 'Pay Now'
+    if (role == 'user' && status == 'pending') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+        onPressed: () async {
+          try {
+            await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'paid');
+            ref.invalidate(ordersProvider);
+            Get.back();
+            Get.snackbar('Payment', 'Payment successful! Order status updated to Paid.');
+          } catch (e) {
+            Get.snackbar('Error', e.toString());
+          }
+        },
+        child: const Text('Pay Now'),
+      );
     }
 
-    if (user.role == 'staff' && order.status == 'paid') {
-      return Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                try {
-                  await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
-                  ref.invalidate(ordersProvider);
-                  Get.back();
-                  Get.snackbar('Success', 'Order Completed by Staff');
-                } catch (e) {
-                  Get.snackbar('Error', e.toString());
-                }
-              },
-              child: const Text('Complete Order'),
-            ),
-          ),
-        ],
+    // 2. Staff sees 'paid' and clicks 'Complete Order'
+    if (role == 'staff' && status == 'paid') {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+        onPressed: () async {
+          try {
+            await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
+            ref.invalidate(ordersProvider);
+            Get.back();
+            Get.snackbar('Order Update', 'Order marked as Completed by Staff.');
+          } catch (e) {
+            Get.snackbar('Error', e.toString());
+          }
+        },
+        child: const Text('Complete Order'),
       );
     }
 

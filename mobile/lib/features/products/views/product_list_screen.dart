@@ -16,12 +16,13 @@ class ProductListScreen extends ConsumerWidget {
     final productsAsync = ref.watch(productsProvider);
 
     final user = ref.watch(authStateProvider).value;
+    print('DEBUG: Current User Role = ${user?.role}');
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
-          if (user?.role == 'owner')
+          if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'super_admin')
             IconButton(
               icon: const Icon(Icons.people),
               onPressed: () => Get.toNamed(Routes.staffManagement),

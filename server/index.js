@@ -453,7 +453,7 @@ app.post('/api/orders', auth, async (req, res) => {
             companyName: currentUser.companyName,
             items: cart.items,
             totalAmount,
-            status: 'completed' // For basic testing, we mark it completed immediately
+            status: 'pending' // Initial status
         });
 
         await order.save();
