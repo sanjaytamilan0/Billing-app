@@ -116,50 +116,94 @@ class ProductListScreen extends ConsumerWidget {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
-          return Card(
+          return Container(
             margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('${product.category} • ${product.companyName}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Color(0xFF6750A4),
-                        ),
-                      ),
-                      Text(
-                        product.productCode,
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF6750A4)),
-                    onPressed: () async {
-                      try {
-                        await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
-                        ref.invalidate(cartProvider);
-                        Get.snackbar('Cart', '${product.name} added to cart');
-                      } catch (e) {
-                        Get.snackbar('Error', e.toString());
-                      }
-                    },
-                  ),
-                ],
-              ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
               onTap: () {
-                // TODO: Show product details
+                // Show product details
               },
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6750A4).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.inventory_2, color: Color(0xFF6750A4)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${product.category} • ${product.companyName}',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Code: ${product.productCode}',
+                            style: TextStyle(color: Colors.grey[400], fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\$${product.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF6750A4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        IconButton(
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF6750A4)),
+                          onPressed: () async {
+                            try {
+                              await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                              ref.invalidate(cartProvider);
+                              Get.snackbar('Cart', '${product.name} added to cart',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: const Color(0xFF6750A4),
+                                colorText: Colors.white,
+                              );
+                            } catch (e) {
+                              Get.snackbar('Error', e.toString());
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },

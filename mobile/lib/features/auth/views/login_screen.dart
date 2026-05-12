@@ -109,11 +109,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: const Text('Don\'t have an account? Register'),
                   ),
                 ),
+                const Spacer(),
+                const Divider(),
+                const Text(
+                  'Quick Testing (Auto-fill)',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildTestChip('Admin', '1234567890', 'super_admin'),
+                    _buildTestChip('Owner', '9876543210', 'owner'),
+                    _buildTestChip('Staff', '5555555555', 'staff'),
+                    _buildTestChip('User', '0000000000', 'user'),
+                  ],
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTestChip(String label, String phone, String role) {
+    return ActionChip(
+      avatar: const Icon(Icons.flash_on, size: 14, color: Colors.amber),
+      label: Text(label, style: const TextStyle(fontSize: 11)),
+      onPressed: () {
+        setState(() {
+          _phoneController.text = phone;
+          _passwordController.text = 'password'; // Common password for all test accounts
+          _selectedRole = role;
+        });
+        Get.snackbar('Auto-filled', 'Using $label credentials', 
+          snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 1));
+      },
     );
   }
 }

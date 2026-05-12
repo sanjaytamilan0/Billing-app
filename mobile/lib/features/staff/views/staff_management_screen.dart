@@ -143,7 +143,25 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   Widget _buildLoadingList() {
     return Skeletonizer(
       enabled: true,
-      child: _buildStaffList(List.generate(3, (index) => null)),
+      child: ListView.builder(
+        itemCount: 3,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const ListTile(
+              leading: CircleAvatar(child: Icon(Icons.person)),
+              title: Text('0000000000'),
+              subtitle: Text('Status: Loading'),
+            ),
+          );
+        },
+      ),
     );
   }
 
