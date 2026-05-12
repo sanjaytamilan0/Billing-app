@@ -44,13 +44,25 @@ class _CompanySelectionScreenState extends ConsumerState<CompanySelectionScreen>
       return;
     }
 
-    // Save selected company to local storage for persistence
-    await ref.read(localStorageProvider).saveCompanyName(_selectedCompany!);
-    
-    // Also update the auth state so components know which company is active
-    ref.read(authStateProvider.notifier).updateUserCompany(_selectedCompany!);
+    setState(() => _isLoading = true);
+    try {
+      // 1. Update company on server (this also clears the cart on server)
+      await ref.read(dioProvider).put('/api/users/company', data: {
+        'companyName': _selectedCompany,
+      });
 
-    Get.offAllNamed(Routes.main);
+      // 2. Save locally
+      await ref.read(localStorageProvider).saveCompanyName(_selectedCompany!);
+      
+      // 3. Update auth state
+      ref.read(authStateProvider.notifier).updateUserCompany(_selectedCompany!);
+
+      Get.offAllNamed(Routes.main);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update shop: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
