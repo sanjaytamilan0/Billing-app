@@ -48,6 +48,7 @@ dependencies:
   # UI & Loading
   skeletonizer: ^2.1.3
   google_fonts: ^6.2.1
+  shared_preferences: ^2.2.3
 
   # JSON & Models
   freezed_annotation: ^2.4.1

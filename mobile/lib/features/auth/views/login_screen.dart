@@ -15,7 +15,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _selectedRole = 'admin';
+  String _selectedRole = 'user';
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +81,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
                   decoration: const InputDecoration(labelText: 'Role'),
-                  items: ['admin', 'owner', 'staff', 'user']
+                  items: ['super_admin', 'owner', 'staff', 'user']
                       .map((role) => DropdownMenuItem(
                             value: role,
-                            child: Text(role.capitalizeFirst!),
+                            child: Text(role.replaceAll('_', ' ').capitalizeFirst!),
                           ))
                       .toList(),
                   onChanged: (val) => setState(() => _selectedRole = val!),
@@ -101,6 +101,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               );
                         },
                   child: const Text('Login'),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Get.toNamed(Routes.register),
+                    child: const Text('Don\'t have an account? Register'),
+                  ),
                 ),
               ],
             ),

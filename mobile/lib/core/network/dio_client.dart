@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'local_storage.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
@@ -17,16 +18,18 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // TODO: Get token from storage and add to headers
-        // final token = await storage.read('token');
-        // if (token != null) {
-        //   options.headers['Authorization'] = 'Bearer $token';
-        // }
+        final storage = ref.read(localStorageProvider);
+        final token = storage.getToken();
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+          print('Adding Token to Header: Bearer $token');
+        }
         return handler.next(options);
       },
       onError: (DioException e, handler) {
         if (e.response?.statusCode == 401) {
-          // TODO: Handle unauthorized (e.g., logout)
+          ref.read(localStorageProvider).clear();
+          // Ideally, trigger a logout/navigation to login
         }
         return handler.next(e);
       },

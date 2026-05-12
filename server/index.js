@@ -480,6 +480,32 @@ app.get('/api/orders', auth, async (req, res) => {
     }
 });
 
+// 18. Update Order Status
+app.put('/api/orders/:id/status', auth, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+        
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // Authorization check
+        const currentUser = req.user;
+        if (currentUser.role === 'super_admin' || 
+           (currentUser.role === 'owner' && currentUser.companyName === order.companyName) ||
+           (currentUser.role === 'staff' && currentUser.companyName === order.companyName) ||
+           (currentUser.role === 'user' && currentUser._id.toString() === order.userId.toString() && status === 'paid')) {
+            
+            order.status = status;
+            await order.save();
+            res.status(200).json({ message: 'Order status updated', order });
+        } else {
+            res.status(403).json({ message: 'Access denied' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
