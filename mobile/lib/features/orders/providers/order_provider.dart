@@ -44,6 +44,9 @@ class OrderRepository {
       print('Updating order $orderId to status $status');
       final response = await _dio.put('/api/orders/$orderId/status', data: {'status': status});
       print('Update Status Response: ${response.data}');
+    } on DioException catch (e) {
+      print('UpdateOrderStatus DioError: ${e.response?.data}');
+      rethrow;
     } catch (e) {
       print('UpdateOrderStatus Error: $e');
       rethrow;
