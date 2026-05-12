@@ -490,17 +490,25 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
 
         // Authorization check
         const currentUser = req.user;
-        if (currentUser.role === 'super_admin' || 
-           (currentUser.role === 'owner' && currentUser.companyName === order.companyName) ||
-           (currentUser.role === 'staff' && currentUser.companyName === order.companyName) ||
-           (currentUser.role === 'user' && currentUser._id.toString() === order.userId.toString() && status === 'paid')) {
-            
+        const isStaffOrAdmin = currentUser.role === 'staff' || currentUser.role === 'super_admin';
+        const isOwner = currentUser.role === 'owner' && currentUser.companyName === order.companyName;
+        const isOrderUser = currentUser.role === 'user' && currentUser._id.toString() === order.userId.toString();
+
+        if (status === 'paid' && (isOrderUser || isStaffOrAdmin || isOwner)) {
+            // Anyone can mark as paid if they are related to the order
             order.status = status;
-            await order.save();
-            res.status(200).json({ message: 'Order status updated', order });
+        } else if (status === 'completed' && isStaffOrAdmin && order.status === 'paid') {
+            // ONLY staff or super_admin can mark as completed, and ONLY if it was paid
+            order.status = status;
+        } else if (isStaffOrAdmin || isOwner) {
+            // General status updates for staff/owner
+            order.status = status;
         } else {
-            res.status(403).json({ message: 'Access denied' });
+            return res.status(403).json({ message: 'Access denied: Invalid status transition or insufficient permissions' });
         }
+
+        await order.save();
+        res.status(200).json({ message: 'Order status updated', order });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

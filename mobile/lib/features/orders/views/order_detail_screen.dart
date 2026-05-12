@@ -81,19 +81,26 @@ class OrderDetailScreen extends ConsumerWidget {
        }
     }
 
-    if ((user.role == 'staff' || user.role == 'owner') && order.status == 'paid') {
+    if (user.role == 'staff' && order.status == 'paid') {
       return Row(
         children: [
           Expanded(
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () async {
-                await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'approved');
-                ref.refresh(ordersProvider);
-                Get.back();
-                Get.snackbar('Success', 'Order Approved');
+                try {
+                  await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
+                  ref.invalidate(ordersProvider);
+                  Get.back();
+                  Get.snackbar('Success', 'Order Completed by Staff');
+                } catch (e) {
+                  Get.snackbar('Error', e.toString());
+                }
               },
-              child: const Text('Approve & Complete'),
+              child: const Text('Complete Order'),
             ),
           ),
         ],
