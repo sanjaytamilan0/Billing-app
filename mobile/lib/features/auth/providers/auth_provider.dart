@@ -22,9 +22,8 @@ class AuthRepository {
         'phone': phone,
         'password': password,
         'role': role,
-        if (companyName != null) 'companyName': companyName,
+        'companyName': companyName,
       });
-      print('Registration successful for $phone');
     } on DioException catch (e) {
       print('Register DioError: ${e.response?.data}');
       rethrow;
@@ -61,6 +60,18 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<UserModel> getMe() async {
+    try {
+      print('Fetching current user profile...');
+      final response = await _dio.get('/api/me');
+      print('Profile Response: ${response.data}');
+      return UserModel.fromJson(response.data);
+    } catch (e) {
+      print('GetMe Error: $e');
+      rethrow;
+    }
+  }
 }
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {
@@ -80,8 +91,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   Future<void> checkAuth() async {
     final token = _storage.getToken();
     if (token != null) {
-      state = AsyncValue.data(UserModel(id: '', phone: '', role: '', token: token));
-      print('Auto-login: Token found');
+      try {
+        state = const AsyncValue.loading();
+        final user = await _repository.getMe();
+        state = AsyncValue.data(user.copyWith(token: token));
+        print('Auto-login: Fetched profile for ${user.phone}');
+      } catch (e, st) {
+        print('Auto-login failed: $e');
+        await _storage.clear();
+        state = const AsyncValue.data(null);
+      }
     }
   }
 
@@ -99,10 +118,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         role: role,
         companyName: companyName,
       );
-      // After registration, user needs to login.
       state = const AsyncValue.data(null);
     } catch (e, st) {
-      print('AuthNotifier Register Error: $e');
       state = AsyncValue.error(e, st);
     }
   }
@@ -112,11 +129,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     try {
       final user = await _repository.login(phone, password, role);
       if (user.token != null) {
-        await _storage.saveToken(user.token!);
+        await _storage.saveUserData(
+          token: user.token!,
+          role: user.role,
+          phone: user.phone,
+          companyName: user.companyName,
+        );
       }
       state = AsyncValue.data(user);
     } catch (e, st) {
-      print('AuthNotifier Login Error: $e');
       state = AsyncValue.error(e, st);
     }
   }

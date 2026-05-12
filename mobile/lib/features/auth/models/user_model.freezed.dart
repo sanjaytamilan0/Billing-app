@@ -21,6 +21,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserModel {
+  @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
   String get phone => throw _privateConstructorUsedError;
   String get role => throw _privateConstructorUsedError;
@@ -44,7 +45,7 @@ abstract class $UserModelCopyWith<$Res> {
       _$UserModelCopyWithImpl<$Res, UserModel>;
   @useResult
   $Res call({
-    String id,
+    @JsonKey(name: '_id') String id,
     String phone,
     String role,
     String? companyName,
@@ -117,7 +118,7 @@ abstract class _$$UserModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    String id,
+    @JsonKey(name: '_id') String id,
     String phone,
     String role,
     String? companyName,
@@ -182,7 +183,7 @@ class __$$UserModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$UserModelImpl implements _UserModel {
   const _$UserModelImpl({
-    required this.id,
+    @JsonKey(name: '_id') required this.id,
     required this.phone,
     required this.role,
     this.companyName,
@@ -194,6 +195,7 @@ class _$UserModelImpl implements _UserModel {
       _$$UserModelImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String id;
   @override
   final String phone;
@@ -263,7 +265,7 @@ class _$UserModelImpl implements _UserModel {
 
 abstract class _UserModel implements UserModel {
   const factory _UserModel({
-    required final String id,
+    @JsonKey(name: '_id') required final String id,
     required final String phone,
     required final String role,
     final String? companyName,
@@ -275,6 +277,7 @@ abstract class _UserModel implements UserModel {
       _$UserModelImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String get id;
   @override
   String get phone;

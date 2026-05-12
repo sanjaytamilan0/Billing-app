@@ -115,9 +115,18 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// --- Protected APIs (Auth Required) ---
+// 4. Get Current User Profile
+app.get('/api/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password -token');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
-// 4. Update Current User Role
+// 5. Update Current User Role
 app.post('/api/user/role', auth, async (req, res) => {
     try {
         const { role } = req.body;
