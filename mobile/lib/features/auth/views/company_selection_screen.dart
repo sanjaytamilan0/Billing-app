@@ -27,7 +27,7 @@ class _CompanySelectionScreenState extends ConsumerState<CompanySelectionScreen>
 
   Future<void> _fetchCompanies() async {
     try {
-      final response = await ref.read(dioClientProvider).get('/api/public/companies');
+      final response = await ref.read(dioProvider).get('/api/public/companies');
       setState(() {
         _companies = List<String>.from(response.data);
         _isLoading = false;
