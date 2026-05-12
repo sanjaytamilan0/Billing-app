@@ -22,12 +22,25 @@ class OrderDetailScreen extends ConsumerWidget {
           children: [
             Text('Order ID: ${order.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            Text('Status: ${order.status.toUpperCase()}', 
-              style: TextStyle(
-                color: _getStatusColor(order.status),
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+            Row(
+              children: [
+                const Text('Status: ', style: TextStyle(fontSize: 18)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(order.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _getStatusLabel(order.status),
+                    style: TextStyle(
+                      color: _getStatusColor(order.status),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const Divider(height: 32),
             const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -52,11 +65,22 @@ class OrderDetailScreen extends ConsumerWidget {
     );
   }
 
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'Waiting for Payment';
+      case 'paid': return 'Paid - Processing';
+      case 'completed': return 'Completed';
+      case 'approved': return 'Approved';
+      default: return status.toUpperCase();
+    }
+  }
+
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'completed': return Colors.green;
-      case 'paid': return Colors.blue;
+    switch (status.toLowerCase()) {
       case 'pending': return Colors.orange;
+      case 'paid': return Colors.blue;
+      case 'completed': return Colors.green;
+      case 'approved': return Colors.teal;
       default: return Colors.grey;
     }
   }
@@ -64,24 +88,30 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget _buildActionButtons(BuildContext context, WidgetRef ref, OrderModel order, user) {
     if (user == null) return const SizedBox();
 
-    final role = user.role.toLowerCase();
-    final status = order.status.toLowerCase();
+    final role = user.role.toString().trim().toLowerCase();
+    final status = order.status.toString().trim().toLowerCase();
+
+    print('DEBUG: OrderDetail Action Check -> Role: $role, Status: $status');
 
     // 1. User sees 'pending' and clicks 'Pay Now'
     if (role == 'user' && status == 'pending') {
-      return ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-        onPressed: () async {
-          try {
-            await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'paid');
-            ref.invalidate(ordersProvider);
-            Get.back();
-            Get.snackbar('Payment', 'Payment successful! Order status updated to Paid.');
-          } catch (e) {
-            Get.snackbar('Error', e.toString());
-          }
-        },
-        child: const Text('Pay Now'),
+      return SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+          onPressed: () async {
+            try {
+              await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'paid');
+              ref.invalidate(ordersProvider);
+              Get.back();
+              Get.snackbar('Payment', 'Payment successful! Order status updated to Paid.');
+            } catch (e) {
+              Get.snackbar('Error', e.toString());
+            }
+          },
+          child: const Text('Pay Now'),
+        ),
       );
     }
 

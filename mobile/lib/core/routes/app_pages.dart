@@ -7,6 +7,7 @@ import '../../features/cart/views/cart_screen.dart';
 import '../../features/orders/views/order_list_screen.dart';
 import '../../features/orders/views/order_detail_screen.dart';
 import '../../features/staff/views/staff_management_screen.dart';
+import '../../features/auth/views/profile_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -44,6 +45,10 @@ class AppPages {
       name: Routes.staffManagement,
       page: () => const StaffManagementScreen(),
     ),
+    GetPage(
+      name: Routes.profile,
+      page: () => const ProfileScreen(),
+    ),
   ];
 }
 
@@ -56,4 +61,5 @@ abstract class Routes {
   static const orderList = '/orders';
   static const orderDetail = '/order-detail';
   static const staffManagement = '/staff-management';
+  static const profile = '/profile';
 }

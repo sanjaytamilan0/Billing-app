@@ -22,6 +22,11 @@ class ProductListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () => Get.toNamed(Routes.profile),
+            tooltip: 'My Profile',
+          ),
           if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'super_admin')
             IconButton(
               icon: const Icon(Icons.people),

@@ -31,11 +31,31 @@ class OrderListScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemBuilder: (context, index) {
               final order = orders[index];
+              final status = order.status.toLowerCase();
               return Card(
                 child: ListTile(
                   title: Text('Order #${order.id.substring(order.id.length - 6)}'),
-                  subtitle: Text('Status: ${order.status.toUpperCase()}'),
-                  trailing: Text('\$${order.totalAmount.toStringAsFixed(2)}'),
+                  subtitle: Row(
+                    children: [
+                      const Text('Status: '),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(status).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _getStatusLabel(status),
+                          style: TextStyle(
+                            color: _getStatusColor(status),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: Text('\$${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   onTap: () => Get.toNamed(Routes.orderDetail, arguments: order),
                 ),
               );
@@ -46,5 +66,25 @@ class OrderListScreen extends ConsumerWidget {
         error: (e, st) => Center(child: Text(e.toString())),
       ),
     );
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status) {
+      case 'pending': return 'Waiting for Payment';
+      case 'paid': return 'Paid - Processing';
+      case 'completed': return 'Completed';
+      case 'approved': return 'Approved';
+      default: return status.toUpperCase();
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending': return Colors.orange;
+      case 'paid': return Colors.blue;
+      case 'completed': return Colors.green;
+      case 'approved': return Colors.teal;
+      default: return Colors.grey;
+    }
   }
 }

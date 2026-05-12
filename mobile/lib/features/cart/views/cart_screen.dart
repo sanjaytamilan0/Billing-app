@@ -53,7 +53,7 @@ class CartScreen extends ConsumerWidget {
                       Get.snackbar('Error', e.toString());
                     }
                   },
-                  child: const Text('Checkout'),
+                  child: const Text('Place Order'),
                 ),
               ),
             ],
