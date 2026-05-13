@@ -532,8 +532,19 @@ app.patch('/api/cart/:productId', auth, async (req, res) => {
 // 15. Get Cart
 app.get('/api/cart', auth, async (req, res) => {
     try {
-        const cart = await Cart.findOne({ userId: req.user._id });
-        res.status(200).json(cart || { items: [] });
+        const cart = await Cart.findOne({ userId: req.user._id }).lean();
+        if (!cart) return res.status(200).json({ items: [] });
+
+        // Add current stock to each item for frontend validation
+        const itemsWithStock = await Promise.all(cart.items.map(async (item) => {
+            const product = await Product.findById(item.productId);
+            return {
+                ...item,
+                stock: product ? product.quantity : 0
+            };
+        }));
+
+        res.status(200).json({ ...cart, items: itemsWithStock });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

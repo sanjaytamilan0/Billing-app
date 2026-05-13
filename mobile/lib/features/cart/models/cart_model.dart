@@ -22,6 +22,7 @@ class CartItemModel with _$CartItemModel {
     required String name,
     required double price,
     required int quantity,
+    @Default(0) int stock,
   }) = _CartItemModel;
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) => _$CartItemModelFromJson(json);
