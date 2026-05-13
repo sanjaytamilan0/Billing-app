@@ -33,18 +33,10 @@ class ProductListScreen extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Shop Products', style: TextStyle(fontWeight: FontWeight.bold)),
               actions: [
-                IconButton(icon: const Icon(Icons.shopping_cart), onPressed: () => Get.toNamed(Routes.cart)),
-                IconButton(icon: const Icon(Icons.account_circle), onPressed: () => Get.toNamed(Routes.profile)),
+                IconButton(icon: const Icon(Icons.shopping_cart_outlined), onPressed: () => Get.toNamed(Routes.cart)),
+                IconButton(icon: const Icon(Icons.account_circle_outlined), onPressed: () => Get.toNamed(Routes.profile)),
                 if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'super_admin')
-                  IconButton(icon: const Icon(Icons.people), onPressed: () => Get.toNamed(Routes.staffManagement)),
-                IconButton(icon: const Icon(Icons.receipt_long), onPressed: () => Get.toNamed(Routes.orderList)),
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () async {
-                    await ref.read(authStateProvider.notifier).logout();
-                    Get.offAllNamed(Routes.login);
-                  },
-                ),
+                  IconButton(icon: const Icon(Icons.people_outline), onPressed: () => Get.toNamed(Routes.staffManagement)),
               ],
               bottom: TabBar(
                 isScrollable: true,
@@ -55,7 +47,7 @@ class ProductListScreen extends ConsumerWidget {
               ),
             ),
             body: _buildBody(context, ref, productState, allCategories, user),
-            floatingActionButton: _buildFAB(),
+            floatingActionButton: _buildFAB(user),
           ),
         );
       },
@@ -134,22 +126,16 @@ class ProductListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFAB() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        FloatingActionButton(
-          heroTag: 'cart',
-          onPressed: () => Get.toNamed(Routes.cart),
-          child: const Icon(Icons.shopping_cart),
-        ),
-        const SizedBox(height: 16),
-        FloatingActionButton(
-          heroTag: 'add',
-          onPressed: () => Get.toNamed(Routes.addProduct),
-          child: const Icon(Icons.add),
-        ),
-      ],
+  Widget _buildFAB(dynamic user) {
+    final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
+    if (!isStaffOrOwner) return const SizedBox.shrink();
+
+    return FloatingActionButton(
+      heroTag: 'add',
+      onPressed: () => Get.toNamed(Routes.addProduct),
+      backgroundColor: const Color(0xFF6750A4),
+      foregroundColor: Colors.white,
+      child: const Icon(Icons.add),
     );
   }
 
