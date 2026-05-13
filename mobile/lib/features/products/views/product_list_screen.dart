@@ -35,8 +35,6 @@ class ProductListScreen extends ConsumerWidget {
               actions: [
                 IconButton(icon: const Icon(Icons.shopping_cart_outlined), onPressed: () => Get.toNamed(Routes.cart)),
                 IconButton(icon: const Icon(Icons.account_circle_outlined), onPressed: () => Get.toNamed(Routes.profile)),
-                if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'super_admin')
-                  IconButton(icon: const Icon(Icons.people_outline), onPressed: () => Get.toNamed(Routes.staffManagement)),
               ],
               bottom: TabBar(
                 isScrollable: true,
