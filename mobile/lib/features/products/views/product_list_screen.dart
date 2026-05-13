@@ -21,7 +21,11 @@ class ProductListScreen extends ConsumerWidget {
 
     return categoriesAsync.when(
       data: (categories) {
+        final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
         final allCategories = ['All', ...categories.map((c) => c.name)];
+        if (isStaffOrOwner) {
+          allCategories.add('Out of Stock');
+        }
         
         return DefaultTabController(
           length: allCategories.length,
@@ -70,9 +74,23 @@ class ProductListScreen extends ConsumerWidget {
       case ProductStatus.initial:
         return TabBarView(
           children: allCategories.map((categoryName) {
-            final filteredProducts = categoryName == 'All'
-                ? state.products
-                : state.products.where((p) => p.category == categoryName).toList();
+            List<ProductModel> filteredProducts;
+            if (categoryName == 'Out of Stock') {
+              filteredProducts = state.products.where((p) => p.quantity <= 0).toList();
+            } else if (categoryName == 'All') {
+              // Owners see everything, shoppers see only available
+              final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
+              filteredProducts = isStaffOrOwner 
+                ? state.products 
+                : state.products.where((p) => p.quantity > 0).toList();
+            } else {
+              // Specific category
+              final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
+              filteredProducts = state.products.where((p) => p.category == categoryName).toList();
+              if (!isStaffOrOwner) {
+                filteredProducts = filteredProducts.where((p) => p.quantity > 0).toList();
+              }
+            }
             return _buildProductList(context, ref, filteredProducts, false, user);
           }).toList(),
         );

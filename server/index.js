@@ -457,6 +457,11 @@ app.post('/api/cart', auth, async (req, res) => {
         const product = await Product.findById(productId);
         if (!product) return res.status(404).json({ message: 'Product not found' });
 
+        // Check stock availability
+        if (product.quantity < (quantity || 1)) {
+            return res.status(400).json({ message: `Only ${product.quantity} items left in stock` });
+        }
+
         let cart = await Cart.findOne({ userId: currentUser._id });
 
         if (!cart) {
@@ -470,7 +475,11 @@ app.post('/api/cart', auth, async (req, res) => {
         // Check if product already in cart
         const itemIndex = cart.items.findIndex(p => p.productId.toString() === productId);
         if (itemIndex > -1) {
-            cart.items[itemIndex].quantity += quantity || 1;
+            const newTotal = cart.items[itemIndex].quantity + (quantity || 1);
+            if (product.quantity < newTotal) {
+                return res.status(400).json({ message: `Cannot add more. Total in cart would exceed stock (${product.quantity})` });
+            }
+            cart.items[itemIndex].quantity = newTotal;
         } else {
             cart.items.push({
                 productId,
@@ -482,6 +491,39 @@ app.post('/api/cart', auth, async (req, res) => {
 
         await cart.save();
         res.status(200).json({ message: 'Item added to cart', cart });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 14a. Update Cart Item Quantity
+app.patch('/api/cart/:productId', auth, async (req, res) => {
+    try {
+        const { quantity } = req.body;
+        const productId = req.params.productId;
+        const currentUser = req.user;
+
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        if (product.quantity < quantity) {
+            return res.status(400).json({ message: `Only ${product.quantity} items left in stock` });
+        }
+
+        const cart = await Cart.findOne({ userId: currentUser._id });
+        if (!cart) return res.status(404).json({ message: 'Cart not found' });
+
+        const itemIndex = cart.items.findIndex(p => p.productId.toString() === productId);
+        if (itemIndex === -1) return res.status(404).json({ message: 'Item not in cart' });
+
+        if (quantity <= 0) {
+            cart.items.splice(itemIndex, 1);
+        } else {
+            cart.items[itemIndex].quantity = quantity;
+        }
+
+        await cart.save();
+        res.status(200).json({ message: 'Cart updated', cart });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -507,6 +549,16 @@ app.post('/api/orders', auth, async (req, res) => {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
+        // Verify stock for all items before creating order
+        for (const item of cart.items) {
+            const product = await Product.findById(item.productId);
+            if (!product || product.quantity < item.quantity) {
+                return res.status(400).json({ 
+                    message: `Stock issue for ${item.name}. Available: ${product ? product.quantity : 0}, Required: ${item.quantity}` 
+                });
+            }
+        }
+
         const totalAmount = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
         const order = new Order({
@@ -518,10 +570,17 @@ app.post('/api/orders', auth, async (req, res) => {
             status: 'pending' // Initial status
         });
 
+        // Decrement stock for each item
+        for (const item of cart.items) {
+            await Product.findByIdAndUpdate(item.productId, {
+                $inc: { quantity: -item.quantity }
+            });
+        }
+
         await order.save();
         
         // Clear the cart after order
-        await Cart.findOneAndDelete({ userId: currentUser._id });
+        await Cart.deleteOne({ userId: currentUser._id });
 
         res.status(201).json({ message: 'Order created successfully', order });
     } catch (error) {

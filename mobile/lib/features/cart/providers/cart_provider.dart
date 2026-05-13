@@ -47,6 +47,14 @@ class CartRepository {
       rethrow;
     }
   }
+
+  Future<void> updateCartItemQuantity(String productId, int quantity) async {
+    try {
+      await _dio.patch('/api/cart/$productId', data: {'quantity': quantity});
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 final cartProvider = FutureProvider<CartModel>((ref) async {
