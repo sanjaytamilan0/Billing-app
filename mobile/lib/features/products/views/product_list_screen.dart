@@ -17,6 +17,7 @@ class ProductListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final productState = ref.watch(productsNotifierProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final cartAsync = ref.watch(cartProvider);
     final user = ref.watch(authStateProvider).value;
 
     return categoriesAsync.when(
@@ -43,7 +44,7 @@ class ProductListScreen extends ConsumerWidget {
                 tabs: allCategories.map((name) => Tab(text: name)).toList(),
               ),
             ),
-            body: _buildBody(context, ref, productState, allCategories, user),
+            body: _buildBody(context, ref, productState, allCategories, user, cartAsync.value),
             floatingActionButton: _buildFAB(user),
           ),
         );
@@ -53,7 +54,7 @@ class ProductListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, List<String> allCategories, dynamic user) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, List<String> allCategories, dynamic user, dynamic cart) {
     switch (state.status) {
       case ProductStatus.loading:
         return _buildLoadingList(context, ref);
@@ -80,7 +81,7 @@ class ProductListScreen extends ConsumerWidget {
                 filteredProducts = filteredProducts.where((p) => p.quantity > 0).toList();
               }
             }
-            return _buildProductList(context, ref, filteredProducts, false, user);
+            return _buildProductList(context, ref, filteredProducts, false, user, cart);
           }).toList(),
         );
     }
@@ -99,6 +100,7 @@ class ProductListScreen extends ConsumerWidget {
         companyName: 'Company',
       )),
       true,
+      null,
       null,
     );
   }
@@ -136,7 +138,7 @@ class ProductListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user) {
+  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
     if (products.isEmpty && !isLoading) {
       return const Center(child: Text('No products found in this category.'));
     }
@@ -148,6 +150,9 @@ class ProductListScreen extends ConsumerWidget {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
+          final cartQty = cart?.items.where((i) => i.productId == product.id).fold<int>(0, (p, c) => c.quantity) ?? 0;
+          final isStockReached = cartQty >= product.quantity;
+
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
@@ -201,24 +206,27 @@ class ProductListScreen extends ConsumerWidget {
                               onPressed: () => _showUpdateQuantityDialog(context, ref, product),
                             ),
                           const SizedBox(width: 8),
-                          IconButton(
-                            constraints: const BoxConstraints(),
-                            padding: EdgeInsets.zero,
-                            icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF6750A4)),
-                            onPressed: () async {
-                              try {
-                                await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
-                                ref.invalidate(cartProvider);
-                                Get.snackbar('Cart', '${product.name} added to cart',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: const Color(0xFF6750A4),
-                                  colorText: Colors.white,
-                                );
-                              } catch (e) {
-                                Get.snackbar('Error', e.toString());
-                              }
-                            },
-                          ),
+                          if (!isStockReached && !isLoading)
+                            IconButton(
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF6750A4)),
+                              onPressed: () async {
+                                try {
+                                  await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                                  ref.invalidate(cartProvider);
+                                  Get.snackbar('Cart', '${product.name} added to cart',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: const Color(0xFF6750A4),
+                                    colorText: Colors.white,
+                                  );
+                                } catch (e) {
+                                  Get.snackbar('Error', e.toString());
+                                }
+                              },
+                            ),
+                          if (isStockReached && !isLoading)
+                            const Icon(Icons.check_circle, color: Colors.green, size: 24),
                         ],
                       ),
                     ],
