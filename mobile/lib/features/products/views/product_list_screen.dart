@@ -32,10 +32,7 @@ class ProductListScreen extends ConsumerWidget {
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Shop Products', style: TextStyle(fontWeight: FontWeight.bold)),
-              actions: [
-                IconButton(icon: const Icon(Icons.shopping_cart_outlined), onPressed: () => Get.toNamed(Routes.cart)),
-                IconButton(icon: const Icon(Icons.account_circle_outlined), onPressed: () => Get.toNamed(Routes.profile)),
-              ],
+              actions: const [],
               bottom: TabBar(
                 isScrollable: true,
                 indicatorColor: const Color(0xFF6750A4),
