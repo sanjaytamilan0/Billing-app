@@ -150,7 +150,15 @@ class ProductListScreen extends ConsumerWidget {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
-          final cartQty = cart?.items.where((i) => i.productId == product.id).fold<int>(0, (p, c) => c.quantity) ?? 0;
+          int cartQty = 0;
+          if (cart != null) {
+            for (final item in cart.items) {
+              if (item.productId == product.id) {
+                cartQty = item.quantity;
+                break;
+              }
+            }
+          }
           final isStockReached = cartQty >= product.quantity;
 
           return Container(
