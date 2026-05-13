@@ -26,6 +26,7 @@ mixin _$ProductModel {
   String get productCode => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
+  int get quantity => throw _privateConstructorUsedError;
   String get category => throw _privateConstructorUsedError;
   String get companyName => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
@@ -54,6 +55,7 @@ abstract class $ProductModelCopyWith<$Res> {
     String productCode,
     String name,
     double price,
+    int quantity,
     String category,
     String companyName,
     String? description,
@@ -83,6 +85,7 @@ class _$ProductModelCopyWithImpl<$Res, $Val extends ProductModel>
     Object? productCode = null,
     Object? name = null,
     Object? price = null,
+    Object? quantity = null,
     Object? category = null,
     Object? companyName = null,
     Object? description = freezed,
@@ -107,6 +110,10 @@ class _$ProductModelCopyWithImpl<$Res, $Val extends ProductModel>
                 ? _value.price
                 : price // ignore: cast_nullable_to_non_nullable
                       as double,
+            quantity: null == quantity
+                ? _value.quantity
+                : quantity // ignore: cast_nullable_to_non_nullable
+                      as int,
             category: null == category
                 ? _value.category
                 : category // ignore: cast_nullable_to_non_nullable
@@ -161,6 +168,7 @@ abstract class _$$ProductModelImplCopyWith<$Res>
     String productCode,
     String name,
     double price,
+    int quantity,
     String category,
     String companyName,
     String? description,
@@ -190,6 +198,7 @@ class __$$ProductModelImplCopyWithImpl<$Res>
     Object? productCode = null,
     Object? name = null,
     Object? price = null,
+    Object? quantity = null,
     Object? category = null,
     Object? companyName = null,
     Object? description = freezed,
@@ -214,6 +223,10 @@ class __$$ProductModelImplCopyWithImpl<$Res>
             ? _value.price
             : price // ignore: cast_nullable_to_non_nullable
                   as double,
+        quantity: null == quantity
+            ? _value.quantity
+            : quantity // ignore: cast_nullable_to_non_nullable
+                  as int,
         category: null == category
             ? _value.category
             : category // ignore: cast_nullable_to_non_nullable
@@ -247,6 +260,7 @@ class _$ProductModelImpl implements _ProductModel {
     required this.productCode,
     required this.name,
     required this.price,
+    this.quantity = 0,
     required this.category,
     required this.companyName,
     this.description,
@@ -267,6 +281,9 @@ class _$ProductModelImpl implements _ProductModel {
   @override
   final double price;
   @override
+  @JsonKey()
+  final int quantity;
+  @override
   final String category;
   @override
   final String companyName;
@@ -279,7 +296,7 @@ class _$ProductModelImpl implements _ProductModel {
 
   @override
   String toString() {
-    return 'ProductModel(id: $id, productCode: $productCode, name: $name, price: $price, category: $category, companyName: $companyName, description: $description, createdBy: $createdBy, creatorRole: $creatorRole)';
+    return 'ProductModel(id: $id, productCode: $productCode, name: $name, price: $price, quantity: $quantity, category: $category, companyName: $companyName, description: $description, createdBy: $createdBy, creatorRole: $creatorRole)';
   }
 
   @override
@@ -292,6 +309,8 @@ class _$ProductModelImpl implements _ProductModel {
                 other.productCode == productCode) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.price, price) || other.price == price) &&
+            (identical(other.quantity, quantity) ||
+                other.quantity == quantity) &&
             (identical(other.category, category) ||
                 other.category == category) &&
             (identical(other.companyName, companyName) ||
@@ -312,6 +331,7 @@ class _$ProductModelImpl implements _ProductModel {
     productCode,
     name,
     price,
+    quantity,
     category,
     companyName,
     description,
@@ -339,6 +359,7 @@ abstract class _ProductModel implements ProductModel {
     required final String productCode,
     required final String name,
     required final double price,
+    final int quantity,
     required final String category,
     required final String companyName,
     final String? description,
@@ -358,6 +379,8 @@ abstract class _ProductModel implements ProductModel {
   String get name;
   @override
   double get price;
+  @override
+  int get quantity;
   @override
   String get category;
   @override

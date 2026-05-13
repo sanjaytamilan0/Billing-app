@@ -10,6 +10,7 @@ class ProductModel with _$ProductModel {
     required String productCode,
     required String name,
     required double price,
+    @Default(0) int quantity,
     required String category,
     required String companyName,
     String? description,

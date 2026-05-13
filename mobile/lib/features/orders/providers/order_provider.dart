@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/order_model.dart';
 import '../../../core/network/dio_client.dart';
+import '../../auth/providers/auth_provider.dart';
 
 final orderRepositoryProvider = Provider((ref) => OrderRepository(ref.watch(dioProvider)));
 
@@ -55,5 +56,7 @@ class OrderRepository {
 }
 
 final ordersProvider = FutureProvider<List<OrderModel>>((ref) async {
+  // Watch auth state so this provider re-runs when user or company changes
+  ref.watch(authStateProvider);
   return ref.watch(orderRepositoryProvider).getOrders();
 });

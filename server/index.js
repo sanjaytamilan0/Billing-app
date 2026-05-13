@@ -302,7 +302,7 @@ app.get('/api/notes', auth, async (req, res) => {
 // 10. Create Product (Owner/Staff only)
 app.post('/api/products', auth, async (req, res) => {
     try {
-        const { name, price, category, description } = req.body;
+        const { name, price, category, description, quantity } = req.body;
         const currentUser = req.user;
 
         // Only super_admin, owner, or staff can create products
@@ -318,6 +318,7 @@ app.post('/api/products', auth, async (req, res) => {
             productCode,
             name,
             price,
+            quantity: quantity || 0,
             category,
             description,
             companyName: currentUser.companyName,
@@ -327,6 +328,37 @@ app.post('/api/products', auth, async (req, res) => {
 
         await product.save();
         res.status(201).json({ message: 'Product created successfully', product });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 10a. Update Product Quantity (Owner/Staff only)
+app.patch('/api/products/:id/quantity', auth, async (req, res) => {
+    try {
+        const { quantity } = req.body;
+        const currentUser = req.user;
+        const productId = req.params.id;
+
+        // Only owner or staff can update quantity
+        if (!['owner', 'staff', 'super_admin'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied. Only Owners and Staff can update quantity.' });
+        }
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Ensure they belong to the same company (except super_admin)
+        if (currentUser.role !== 'super_admin' && product.companyName !== currentUser.companyName) {
+            return res.status(403).json({ message: 'Access denied. Product belongs to another company.' });
+        }
+
+        product.quantity = quantity;
+        await product.save();
+
+        res.status(200).json({ message: 'Quantity updated successfully', product });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -508,8 +540,8 @@ app.get('/api/orders', auth, async (req, res) => {
         } else if (currentUser.role === 'owner' || currentUser.role === 'staff') {
             query = { companyName: currentUser.companyName };
         } else {
-            // regular user only sees their own orders
-            query = { userId: currentUser._id };
+            // regular user only sees their own orders for the selected company
+            query = { userId: currentUser._id, companyName: currentUser.companyName };
         }
 
         const orders = await Order.find(query).sort({ createdAt: -1 });

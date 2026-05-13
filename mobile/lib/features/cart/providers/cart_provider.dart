@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cart_model.dart';
 import '../../../core/network/dio_client.dart';
+import '../../auth/providers/auth_provider.dart';
 
 final cartRepositoryProvider = Provider((ref) => CartRepository(ref.watch(dioProvider)));
 
@@ -49,5 +50,7 @@ class CartRepository {
 }
 
 final cartProvider = FutureProvider<CartModel>((ref) async {
+  // Watch auth state so this provider re-runs when user or company changes
+  ref.watch(authStateProvider);
   return ref.watch(cartRepositoryProvider).getCart();
 });
