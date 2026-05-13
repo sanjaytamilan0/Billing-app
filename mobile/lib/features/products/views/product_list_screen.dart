@@ -50,7 +50,7 @@ class ProductListScreen extends ConsumerWidget {
                 tabs: allCategories.map((name) => Tab(text: name)).toList(),
               ),
             ),
-            body: _buildBody(context, ref, productState, allCategories),
+            body: _buildBody(context, ref, productState, allCategories, user),
             floatingActionButton: _buildFAB(),
           ),
         );
@@ -60,7 +60,7 @@ class ProductListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, List<String> allCategories) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, List<String> allCategories, dynamic user) {
     switch (state.status) {
       case ProductStatus.loading:
         return _buildLoadingList(context, ref);
@@ -73,7 +73,7 @@ class ProductListScreen extends ConsumerWidget {
             final filteredProducts = categoryName == 'All'
                 ? state.products
                 : state.products.where((p) => p.category == categoryName).toList();
-            return _buildProductList(context, ref, filteredProducts, false);
+            return _buildProductList(context, ref, filteredProducts, false, user);
           }).toList(),
         );
     }
@@ -92,6 +92,7 @@ class ProductListScreen extends ConsumerWidget {
         companyName: 'Company',
       )),
       true,
+      null,
     );
   }
 
@@ -134,7 +135,7 @@ class ProductListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading) {
+  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user) {
     if (products.isEmpty && !isLoading) {
       return const Center(child: Text('No products found in this category.'));
     }
@@ -261,6 +262,5 @@ class ProductListScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
   }
 }
