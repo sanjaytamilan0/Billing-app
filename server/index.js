@@ -14,6 +14,15 @@ const auth = require('./middleware/auth');
 const path = require('path');
 
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+const Message = require('./models/Message');
+
 const PORT = process.env.PORT || 10000;
 
 app.get('/hello', (req, res) => res.send('world'));
@@ -124,6 +133,64 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// --- Chat APIs ---
+
+// 1. Get Chat History between current user and another user
+app.get('/api/chat/history/:otherUserId', auth, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { otherUserId } = req.params;
+
+        const messages = await Message.find({
+            $or: [
+                { sender: userId, receiver: otherUserId },
+                { sender: otherUserId, receiver: userId }
+            ]
+        }).sort({ createdAt: 1 });
+
+        res.status(200).json(messages);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 2. Get list of chat participants (For Owner to see all staff and users in company)
+app.get('/api/chat/participants', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        if (currentUser.role !== 'owner' && currentUser.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Only owners can see participant list' });
+        }
+
+        const participants = await User.find({ 
+            companyName: currentUser.companyName,
+            _id: { $ne: currentUser._id },
+            role: { $in: ['staff', 'user'] }
+        }).select('phone role companyName');
+
+        res.status(200).json(participants);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 3. Get Owner for the current company (For Staff/User to find who to talk to)
+app.get('/api/chat/owner', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const owner = await User.findOne({ 
+            companyName: currentUser.companyName, 
+            role: 'owner' 
+        }).select('phone role companyName');
+
+        if (!owner) return res.status(404).json({ message: 'Owner not found for this company' });
+        res.status(200).json(owner);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // 4. Get Current User Profile
 app.get('/api/me', auth, async (req, res) => {
@@ -741,6 +808,80 @@ app.get('/api/orders/:id/invoice', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+// --- WebSocket Logic ---
+
+io.use(async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token;
+        if (!token) return next(new Error('Authentication error'));
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return next(new Error('User not found'));
+
+        socket.user = user;
+        next();
+    } catch (err) {
+        next(new Error('Authentication error'));
+    }
+});
+
+io.on('connection', (socket) => {
+    console.log(`User connected: ${socket.user._id} (${socket.user.role})`);
+
+    // Join a room unique to this user
+    socket.join(socket.user._id.toString());
+
+    socket.on('send_message', async (data) => {
+        try {
+            const { receiverId, text } = data;
+            const sender = socket.user;
+
+            // Validate receiver exists and is in the same company
+            const receiver = await User.findById(receiverId);
+            if (!receiver) return;
+            if (receiver.companyName !== sender.companyName) return;
+
+            // Role-based routing validation
+            let allowed = false;
+            if (sender.role === 'owner' || sender.role === 'super_admin') {
+                // Owner can talk to anyone in company
+                allowed = true;
+            } else if (receiver.role === 'owner' || receiver.role === 'super_admin') {
+                // Staff/User can only talk to Owner
+                allowed = true;
+            }
+
+            if (!allowed) {
+                console.log(`Blocked message from ${sender.role} to ${receiver.role}`);
+                return;
+            }
+
+            const message = new Message({
+                sender: sender._id,
+                receiver: receiver._id,
+                text,
+                companyName: sender.companyName
+            });
+
+            await message.save();
+
+            // Emit to receiver's room
+            io.to(receiverId).emit('receive_message', message);
+            // Confirm back to sender (optional, but good for UI)
+            socket.emit('message_sent', message);
+
+        } catch (error) {
+            console.error('Chat Error:', error);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`User disconnected: ${socket.user._id}`);
+    });
+});
+
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+

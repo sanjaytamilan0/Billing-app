@@ -6,6 +6,10 @@ import '../../orders/views/order_list_screen.dart';
 import '../../auth/views/profile_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/routes/app_pages.dart';
+import '../../chat/views/chat_list_screen.dart';
+import '../../chat/views/chat_screen.dart';
+import '../../chat/providers/chat_provider.dart';
+
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -131,7 +135,30 @@ class DashboardTab extends ConsumerWidget {
                   Colors.purple,
                   () => Get.toNamed(Routes.profile),
                 ),
+                _buildDashBox(
+                  context,
+                  'Chat',
+                  Icons.chat,
+                  Colors.teal,
+                  () async {
+                    if (user?.role == 'owner' || user?.role == 'super_admin') {
+                      Get.to(() => const ChatListScreen());
+                    } else {
+                      // Find owner and go to chat
+                      final owner = await ref.read(companyOwnerProvider.future);
+                      if (owner != null) {
+                        Get.to(() => ChatScreen(
+                          otherUserId: owner.id,
+                          otherUserName: 'Company Owner',
+                        ));
+                      } else {
+                        Get.snackbar('Error', 'Owner not found for this company');
+                      }
+                    }
+                  },
+                ),
               ],
+
             ),
           ],
         ),
