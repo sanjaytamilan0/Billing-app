@@ -834,26 +834,41 @@ io.on('connection', (socket) => {
 
     socket.on('send_message', async (data) => {
         try {
+            console.log(`\n--- NEW MESSAGE INCOMING ---`);
+            console.log(`Payload received:`, data);
+            
             const { receiverId, text } = data;
             const sender = socket.user;
+            console.log(`Sender: ${sender._id} (Role: ${sender.role}, Company: ${sender.companyName})`);
 
             // Validate receiver exists and is in the same company
             const receiver = await User.findById(receiverId);
-            if (!receiver) return;
-            if (receiver.companyName !== sender.companyName) return;
+            if (!receiver) {
+                console.log(`❌ BLOCK: Receiver ID ${receiverId} not found in database.`);
+                return;
+            }
+            
+            console.log(`Receiver: ${receiver._id} (Role: ${receiver.role}, Company: ${receiver.companyName})`);
+            
+            if (receiver.companyName !== sender.companyName) {
+                console.log(`❌ BLOCK: Company mismatch! Sender: '${sender.companyName}', Receiver: '${receiver.companyName}'`);
+                return;
+            }
 
             // Role-based routing validation
             let allowed = false;
             if (sender.role === 'owner' || sender.role === 'super_admin') {
                 // Owner can talk to anyone in company
                 allowed = true;
+                console.log(`✅ ALLOWED: Sender is owner/admin.`);
             } else if (receiver.role === 'owner' || receiver.role === 'super_admin') {
                 // Staff/User can only talk to Owner
                 allowed = true;
+                console.log(`✅ ALLOWED: Receiver is owner/admin.`);
             }
 
             if (!allowed) {
-                console.log(`Blocked message from ${sender.role} to ${receiver.role}`);
+                console.log(`❌ BLOCK: Role restriction. ${sender.role} cannot message ${receiver.role}`);
                 return;
             }
 
@@ -867,8 +882,11 @@ io.on('connection', (socket) => {
             await message.save();
 
             // Emit to receiver's room
+            console.log(`📤 Emitting 'receive_message' to room: ${receiverId}`);
             io.to(receiverId).emit('receive_message', message);
-            // Confirm back to sender (optional, but good for UI)
+            
+            // Confirm back to sender
+            console.log(`📤 Emitting 'message_sent' confirmation to sender: ${sender._id}`);
             socket.emit('message_sent', message);
 
         } catch (error) {
