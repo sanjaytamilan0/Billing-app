@@ -38,7 +38,7 @@ class AnalyticsScreen extends ConsumerWidget {
         children: [
           _buildSummaryCards(data.summary),
           const SizedBox(height: 32),
-          const Text('Revenue Over Time (Past 7 Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Revenue Over Time (Last 30 Active Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _buildRevenueChart(data.dailyRevenue),
           const SizedBox(height: 32),
@@ -84,7 +84,7 @@ class AnalyticsScreen extends ConsumerWidget {
 
   Widget _buildRevenueChart(List<DailyRevenue> daily) {
     if (daily.isEmpty) {
-      return const SizedBox(height: 200, child: Center(child: Text('No revenue data for the past 7 days.')));
+      return const SizedBox(height: 200, child: Center(child: Text('No revenue data available.')));
     }
 
     List<FlSpot> spots = [];

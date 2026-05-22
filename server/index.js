@@ -733,15 +733,11 @@ app.get('/api/analytics', auth, async (req, res) => {
         ]);
         const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
-        // 2. Revenue Over Time (Past 7 Days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
+        // 2. Revenue Over Time (Last 30 Active Days)
         const dailyRevenue = await Order.aggregate([
             { 
                 $match: { 
                     ...matchQuery, 
-                    createdAt: { $gte: sevenDaysAgo },
                     status: { $in: ['paid', 'approved', 'completed'] }
                 } 
             },
@@ -751,6 +747,8 @@ app.get('/api/analytics', auth, async (req, res) => {
                     revenue: { $sum: '$totalAmount' }
                 }
             },
+            { $sort: { _id: -1 } },
+            { $limit: 30 },
             { $sort: { _id: 1 } }
         ]);
 
