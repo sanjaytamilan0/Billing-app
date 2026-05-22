@@ -4,12 +4,12 @@ import '../../../core/network/dio_client.dart';
 import '../../products/models/product_model.dart';
 import '../../auth/providers/auth_provider.dart';
 
-final favoritesProvider = StateNotifierProvider<FavoritesNotifier, AsyncValue<List<Product>>>((ref) {
+final favoritesProvider = StateNotifierProvider<FavoritesNotifier, AsyncValue<List<ProductModel>>>((ref) {
   final dio = ref.watch(dioProvider);
   return FavoritesNotifier(dio);
 });
 
-class FavoritesNotifier extends StateNotifier<AsyncValue<List<Product>>> {
+class FavoritesNotifier extends StateNotifier<AsyncValue<List<ProductModel>>> {
   final Dio _dio;
 
   FavoritesNotifier(this._dio) : super(const AsyncValue.loading()) {
@@ -20,8 +20,8 @@ class FavoritesNotifier extends StateNotifier<AsyncValue<List<Product>>> {
     try {
       state = const AsyncValue.loading();
       final response = await _dio.get('/api/users/favorites');
-      final List<Product> products = (response.data as List)
-          .map((item) => Product.fromJson(item))
+      final List<ProductModel> products = (response.data as List)
+          .map((item) => ProductModel.fromJson(item))
           .toList();
       state = AsyncValue.data(products);
     } catch (e, st) {
