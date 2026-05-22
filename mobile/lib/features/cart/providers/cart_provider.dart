@@ -20,6 +20,8 @@ class CartRepository {
       print('GetCart DioError: ${e.type} -> ${e.message}');
       if (e.response != null) {
         print('Error Response Data: ${e.response?.data}');
+        final msg = e.response?.data['message'];
+        if (msg != null) throw msg;
       }
       rethrow;
     } catch (e) {
@@ -40,6 +42,8 @@ class CartRepository {
       print('AddToCart DioError: ${e.type} -> ${e.message}');
       if (e.response != null) {
         print('Error Response Data: ${e.response?.data}');
+        final msg = e.response?.data['message'];
+        if (msg != null) throw msg;
       }
       rethrow;
     } catch (e) {
@@ -51,6 +55,10 @@ class CartRepository {
   Future<void> updateCartItemQuantity(String productId, int quantity) async {
     try {
       await _dio.patch('/api/cart/$productId', data: {'quantity': quantity});
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'];
+      if (msg != null) throw msg;
+      rethrow;
     } catch (e) {
       rethrow;
     }

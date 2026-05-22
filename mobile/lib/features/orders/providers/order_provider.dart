@@ -19,6 +19,8 @@ class OrderRepository {
       return data.map((json) => OrderModel.fromJson(json)).toList();
     } on DioException catch (e) {
       print('GetOrders DioError: ${e.response?.data}');
+      final msg = e.response?.data?['message'];
+      if (msg != null) throw msg;
       rethrow;
     } catch (e) {
       print('GetOrders Unexpected Error: $e');
@@ -33,6 +35,8 @@ class OrderRepository {
       print('Checkout Response: ${response.data}');
     } on DioException catch (e) {
       print('Checkout DioError: ${e.response?.data}');
+      final msg = e.response?.data?['message'];
+      if (msg != null) throw msg;
       rethrow;
     } catch (e) {
       print('Checkout Unexpected Error: $e');
@@ -47,6 +51,8 @@ class OrderRepository {
       print('Update Status Response: ${response.data}');
     } on DioException catch (e) {
       print('UpdateOrderStatus DioError: ${e.response?.data}');
+      final msg = e.response?.data?['message'];
+      if (msg != null) throw msg;
       rethrow;
     } catch (e) {
       print('UpdateOrderStatus Error: $e');

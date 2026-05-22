@@ -224,6 +224,39 @@ app.put('/api/users/company', auth, async (req, res) => {
     }
 });
 
+// 4b. Get Favorites
+app.get('/api/users/favorites', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('favorites');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(user.favorites);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 4c. Toggle Favorite
+app.post('/api/users/favorites/:productId', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const productId = req.params.productId;
+        const index = user.favorites.indexOf(productId);
+        
+        if (index > -1) {
+            user.favorites.splice(index, 1);
+        } else {
+            user.favorites.push(productId);
+        }
+        
+        await user.save();
+        res.status(200).json({ message: 'Favorites updated successfully', favorites: user.favorites });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 5. Update Current User Role
 app.post('/api/user/role', auth, async (req, res) => {
     try {
