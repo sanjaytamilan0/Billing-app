@@ -10,9 +10,6 @@ import '../../../core/routes/app_pages.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../products/providers/product_provider.dart';
 import '../../cart/providers/cart_provider.dart';
-import '../../company/providers/company_provider.dart';
-import '../../chatbot/views/chatbot_screen.dart';
-import '../../chatbot/views/chat_list_screen.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -35,8 +32,7 @@ class MainScreen extends ConsumerWidget {
         label: const Text('AI Assistant', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       )
           .animate(onPlay: (controller) => controller.repeat())
-          .shimmer(duration: const Duration(seconds: 3), color: Colors.white24)
-          .elevate(),
+          .shimmer(duration: const Duration(seconds: 3), color: Colors.white24),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
