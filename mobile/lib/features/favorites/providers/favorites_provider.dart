@@ -19,8 +19,8 @@ class FavoritesNotifier extends StateNotifier<AsyncValue<List<ProductModel>>> {
   Future<void> fetchFavorites() async {
     try {
       state = const AsyncValue.loading();
-      print('Favorites API Raw Response: ${response.data}');
       final response = await _dio.get('/api/users/favorites');
+      print('Favorites API Raw Response: ${response.data}');
       final List<ProductModel> products = (response.data as List)
           .map((item) => ProductModel.fromJson(item))
           .toList();

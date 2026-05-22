@@ -39,6 +39,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         index: _currentIndex,
         children: _screens,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.toNamed(Routes.chatbot),
+        backgroundColor: Colors.indigo,
+        child: const Icon(Icons.auto_awesome, color: Colors.white),
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

@@ -15,6 +15,7 @@ import '../../features/products/views/review_suggestions_screen.dart';
 import '../../features/analytics/views/analytics_screen.dart';
 import '../../features/settings/views/settings_screen.dart';
 import '../../features/favorites/views/favorites_screen.dart';
+import '../../features/chatbot/views/chatbot_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -84,6 +85,10 @@ class AppPages {
       name: Routes.favorites,
       page: () => const FavoritesScreen(),
     ),
+    GetPage(
+      name: Routes.chatbot,
+      page: () => const ChatbotScreen(),
+    ),
   ];
 }
 
@@ -104,4 +109,5 @@ abstract class Routes {
   static const analytics = '/analytics';
   static const settings = '/settings';
   static const favorites = '/favorites';
+  static const chatbot = '/chatbot';
 }

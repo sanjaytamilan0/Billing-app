@@ -9,8 +9,10 @@ const Product = require('./models/Product');
 const ProductSuggestion = require('./models/ProductSuggestion');
 const Category = require('./models/Category');
 const Cart = require('./models/Cart');
+
 const Order = require('./models/Order');
 const auth = require('./middleware/auth');
+const aiService = require('./services/aiService');
 
 const path = require('path');
 
@@ -1119,6 +1121,23 @@ app.get('/api/orders/:id/invoice', async (req, res) => {
 
         doc.end();
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 12. AI Chatbot
+app.post("/api/chat", auth, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        if (!prompt) return res.status(400).json({ message: "Prompt is required" });
+        
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        
+        const reply = await aiService.processChat(user, prompt);
+        res.status(200).json({ reply });
+    } catch (error) {
+        console.error("Chat AI Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
