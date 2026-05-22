@@ -134,9 +134,9 @@ class AnalyticsScreen extends ConsumerWidget {
           ),
           borderData: FlBorderData(show: false),
           minX: 0,
-          maxX: (daily.length - 1).toDouble(),
+          maxX: daily.length > 1 ? (daily.length - 1).toDouble() : 1.0,
           minY: 0,
-          maxY: maxRevenue * 1.2, // Give some top padding
+          maxY: maxRevenue == 0 ? 10 : maxRevenue * 1.2, // Give some top padding
           lineBarsData: [
             LineChartBarData(
               spots: spots,
