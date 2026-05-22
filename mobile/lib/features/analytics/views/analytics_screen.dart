@@ -37,15 +37,15 @@ class AnalyticsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSummaryCards(data.summary).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
+          _buildSummaryCards(data.summary).animate().fadeIn(duration: const Duration(milliseconds: 600)).slideY(begin: 0.1),
           const SizedBox(height: 32),
-          const Text('Revenue Over Time (Last 30 Active Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+          const Text('Revenue Over Time (Last 30 Active Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: const Duration(milliseconds: 200)).slideY(begin: 0.1),
           const SizedBox(height: 16),
-          _buildRevenueChart(data.dailyRevenue).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
+          _buildRevenueChart(data.dailyRevenue).animate().fadeIn(delay: const Duration(milliseconds: 300)).slideY(begin: 0.1),
           const SizedBox(height: 32),
-          const Text('Top 5 Selling Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+          const Text('Top 5 Selling Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: const Duration(milliseconds: 400)).slideY(begin: 0.1),
           const SizedBox(height: 16),
-          _buildTopProducts(data.topProducts).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
+          _buildTopProducts(data.topProducts).animate().fadeIn(delay: const Duration(milliseconds: 500)).slideY(begin: 0.1),
         ],
       ),
     );

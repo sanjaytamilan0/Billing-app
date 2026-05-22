@@ -28,14 +28,14 @@ class MainScreen extends ConsumerWidget {
         backgroundColor: theme.colorScheme.primary,
         icon: const Icon(Icons.auto_awesome, color: Colors.white)
             .animate(onPlay: (controller) => controller.repeat())
-            .shimmer(duration: 2.seconds)
-            .scaleXY(end: 1.1, duration: 1.seconds, curve: Curves.easeInOut)
+            .shimmer(duration: const Duration(seconds: 2))
+            .scaleXY(end: 1.1, duration: const Duration(seconds: 1), curve: Curves.easeInOut)
             .then()
-            .scaleXY(end: 1.0, duration: 1.seconds, curve: Curves.easeInOut),
+            .scaleXY(end: 1.0, duration: const Duration(seconds: 1), curve: Curves.easeInOut),
         label: const Text('AI Assistant', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       )
           .animate(onPlay: (controller) => controller.repeat())
-          .shimmer(duration: 3.seconds, color: Colors.white24)
+          .shimmer(duration: const Duration(seconds: 3), color: Colors.white24)
           .elevate(),
       body: CustomScrollView(
         slivers: [
@@ -64,7 +64,7 @@ class MainScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.1),
                         ),
-                      ).animate().fade(duration: 2.seconds).scale(begin: const Offset(0.8, 0.8)),
+                      ).animate().fade(duration: const Duration(seconds: 2)).scale(begin: const Offset(0.8, 0.8)),
                     ),
                     SafeArea(
                       child: Padding(
@@ -76,7 +76,7 @@ class MainScreen extends ConsumerWidget {
                             Text(
                               'Welcome back,',
                               style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
-                            ).animate().fadeIn(delay: 200.ms).slideX(),
+                            ).animate().fadeIn(delay: const Duration(milliseconds: 200)).slideX(),
                             Text(
                               user?.phone ?? 'User',
                               style: const TextStyle(
@@ -85,7 +85,7 @@ class MainScreen extends ConsumerWidget {
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
                               ),
-                            ).animate().fadeIn(delay: 400.ms).slideX(),
+                            ).animate().fadeIn(delay: const Duration(milliseconds: 400)).slideX(),
                           ],
                         ),
                       ),
@@ -104,7 +104,7 @@ class MainScreen extends ConsumerWidget {
                   const Text(
                     'Dashboard',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 500)).slideY(begin: 0.2),
                   const SizedBox(height: 16),
                   _buildAnimatedGrid(context, user, ref),
                   const SizedBox(height: 32),
@@ -172,7 +172,7 @@ class MainScreen extends ConsumerWidget {
         const Text(
           'Recommended For You',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2),
+        ).animate().fadeIn(delay: const Duration(milliseconds: 600)).slideY(begin: 0.2),
         const SizedBox(height: 16),
         SizedBox(
           height: 180,
