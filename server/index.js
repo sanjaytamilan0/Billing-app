@@ -667,6 +667,80 @@ app.patch('/api/suggestions/:id/status', auth, async (req, res) => {
     }
 });
 
+// --- Analytics APIs ---
+
+// 20. Get Analytics Dashboard (Owner/Staff)
+app.get('/api/analytics', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const matchQuery = currentUser.role === 'super_admin' ? {} : { companyName: currentUser.companyName };
+
+        // 1. Summary Metrics
+        const totalOrders = await Order.countDocuments(matchQuery);
+        const pendingOrders = await Order.countDocuments({ ...matchQuery, status: 'pending' });
+        
+        const revenueResult = await Order.aggregate([
+            { $match: { ...matchQuery, status: { $in: ['paid', 'approved', 'completed'] } } },
+            { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+
+        // 2. Revenue Over Time (Past 7 Days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const dailyRevenue = await Order.aggregate([
+            { 
+                $match: { 
+                    ...matchQuery, 
+                    createdAt: { $gte: sevenDaysAgo },
+                    status: { $in: ['paid', 'approved', 'completed'] }
+                } 
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    revenue: { $sum: '$totalAmount' }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // 3. Top Selling Products
+        const topProducts = await Order.aggregate([
+            { $match: { ...matchQuery, status: { $in: ['paid', 'approved', 'completed'] } } },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    name: { $first: '$items.name' },
+                    totalQuantity: { $sum: '$items.quantity' },
+                    totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 5 }
+        ]);
+
+        res.status(200).json({
+            summary: {
+                totalRevenue,
+                totalOrders,
+                pendingOrders
+            },
+            dailyRevenue,
+            topProducts
+        });
+    } catch (error) {
+        console.error('Analytics Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- Category Management APIs ---
 
 // 12. Create Category (Owner/Staff only)

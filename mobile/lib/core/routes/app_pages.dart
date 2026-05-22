@@ -12,6 +12,7 @@ import '../../features/home/views/main_screen.dart';
 import '../../features/auth/views/company_selection_screen.dart';
 import '../../features/products/views/suggest_product_screen.dart';
 import '../../features/products/views/review_suggestions_screen.dart';
+import '../../features/analytics/views/analytics_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -69,6 +70,10 @@ class AppPages {
       name: Routes.reviewSuggestions,
       page: () => const ReviewSuggestionsScreen(),
     ),
+    GetPage(
+      name: Routes.analytics,
+      page: () => const AnalyticsScreen(),
+    ),
   ];
 }
 
@@ -86,4 +91,5 @@ abstract class Routes {
   static const profile = '/profile';
   static const suggestProduct = '/suggest-product';
   static const reviewSuggestions = '/review-suggestions';
+  static const analytics = '/analytics';
 }

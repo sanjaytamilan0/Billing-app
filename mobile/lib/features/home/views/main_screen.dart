@@ -147,6 +147,14 @@ class DashboardTab extends ConsumerWidget {
                     Colors.amber,
                     () => Get.toNamed(Routes.reviewSuggestions),
                   ),
+                if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff')
+                  _buildDashBox(
+                    context,
+                    'Analytics',
+                    Icons.insights,
+                    Colors.indigo,
+                    () => Get.toNamed(Routes.analytics),
+                  ),
                 _buildDashBox(
                   context,
                   'Profile',
