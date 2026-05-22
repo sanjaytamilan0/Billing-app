@@ -116,7 +116,7 @@ class MainScreen extends ConsumerWidget {
 
   Widget _buildAnimatedGrid(BuildContext context, user, WidgetRef ref) {
     final List<Widget> dashBoxes = [
-      _buildDashBox(context, 'Products'.tr, Icons.inventory_2, const Color(0xFF8B5CF6), () => Get.toNamed(Routes.productList)),
+      _buildDashBox(context, 'Products'.tr, Icons.inventory_2, const Color(0xFF8B5CF6), () => Get.toNamed(Routes.products)),
       _buildDashBox(context, 'Cart'.tr, Icons.shopping_cart, const Color(0xFFEC4899), () => Get.toNamed(Routes.cart)),
       _buildDashBox(context, 'Favorites'.tr, Icons.favorite, const Color(0xFFF43F5E), () => Get.toNamed(Routes.favorites)),
       _buildDashBox(context, 'Orders'.tr, Icons.receipt_long, const Color(0xFFF59E0B), () => Get.toNamed(Routes.orderList)),
