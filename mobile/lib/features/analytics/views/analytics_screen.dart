@@ -160,35 +160,40 @@ class AnalyticsScreen extends ConsumerWidget {
       return const Text('No sales data available yet.');
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final p = products[index];
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: const Color(0xFF7C3AED).withOpacity(0.2)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF7C3AED).withOpacity(0.2)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(const Color(0xFF7C3AED).withOpacity(0.1)),
+            dataRowHeight: 60,
+            columnSpacing: 24,
+            columns: const [
+              DataColumn(label: Text('#', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)))),
+              DataColumn(label: Text('Product', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Revenue', style: TextStyle(fontWeight: FontWeight.bold))),
+            ],
+            rows: List.generate(products.length, (index) {
+              final p = products[index];
+              return DataRow(
+                cells: [
+                  DataCell(Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                  DataCell(Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  DataCell(Text('${p.totalQuantity}')),
+                  DataCell(Text('\$${p.totalRevenue.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
+                ],
+              );
+            }),
           ),
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Text('#${index + 1}', style: const TextStyle(color: Color(0xFF7C3AED), fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-            title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            subtitle: Text('Qty Sold: ${p.totalQuantity}', style: TextStyle(color: Colors.grey[600])),
-            trailing: Text('\$${p.totalRevenue.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w900, fontSize: 18)),
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
 import '../providers/product_provider.dart';
 import '../providers/product_state.dart';
 import '../providers/category_provider.dart';
@@ -19,7 +23,7 @@ class ProductListScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductListScreenState extends ConsumerState<ProductListScreen> {
-  bool _isListView = false;
+  bool _isBulkMode = false;
   final Map<String, int> _bulkSelections = {};
 
   @override
@@ -44,10 +48,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               title: const Text('Shop Products', style: TextStyle(fontWeight: FontWeight.bold)),
               actions: [
                 IconButton(
-                  icon: Icon(_isListView ? Icons.grid_view : Icons.view_list),
+                  icon: Icon(_isBulkMode ? Icons.close : Icons.checklist_rtl),
+                  tooltip: 'Bulk Add Mode',
                   onPressed: () {
                     setState(() {
-                      _isListView = !_isListView;
+                      _isBulkMode = !_isBulkMode;
                       _bulkSelections.clear();
                     });
                   },
@@ -56,14 +61,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ],
               bottom: TabBar(
                 isScrollable: true,
-                indicatorColor: const Color(0xFF6750A4),
-                labelColor: const Color(0xFF6750A4),
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                labelColor: Theme.of(context).colorScheme.primary,
                 unselectedLabelColor: Colors.grey,
                 tabs: allCategories.map((name) => Tab(text: name)).toList(),
               ),
             ),
             body: _buildBody(context, ref, productState, allCategories, user, cartAsync.value),
-            floatingActionButton: _isListView ? _buildBulkAddFAB() : _buildFAB(user),
+            floatingActionButton: _isBulkMode ? _buildBulkAddFAB() : _buildFAB(user),
           ),
         );
       },
@@ -86,13 +91,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             if (categoryName == 'Out of Stock') {
               filteredProducts = state.products.where((p) => p.quantity <= 0).toList();
             } else if (categoryName == 'All') {
-              // Owners see everything, shoppers see only available
               final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
               filteredProducts = isStaffOrOwner 
                 ? state.products 
                 : state.products.where((p) => p.quantity > 0).toList();
             } else {
-              // Specific category
               final isStaffOrOwner = user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff';
               filteredProducts = state.products.where((p) => p.category == categoryName).toList();
               if (!isStaffOrOwner) {
@@ -111,7 +114,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       ref,
       List.generate(6, (index) => ProductModel(
         id: '$index',
-        productCode: '1234567890123456',
+        productCode: '123456',
         name: 'Loading...',
         price: 0.0,
         category: 'Category',
@@ -150,10 +153,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     return FloatingActionButton(
       heroTag: 'add',
       onPressed: () => Get.toNamed(Routes.addProduct),
-      backgroundColor: const Color(0xFF6750A4),
+      backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Colors.white,
       child: const Icon(Icons.add),
-    );
+    ).animate().scale(delay: const Duration(milliseconds: 200)).shimmer();
   }
 
   Widget _buildBulkAddFAB() {
@@ -163,11 +166,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     return FloatingActionButton.extended(
       heroTag: 'bulk_add',
       onPressed: _submitBulkAdd,
-      backgroundColor: const Color(0xFF6750A4),
+      backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.shopping_cart_checkout),
-      label: const Text('Add All to Cart'),
-    );
+      label: const Text('Add All to Cart', style: TextStyle(fontWeight: FontWeight.bold)),
+    ).animate().slideY(begin: 1.0, duration: const Duration(milliseconds: 300));
   }
 
   Future<void> _submitBulkAdd() async {
@@ -190,7 +193,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       Get.snackbar('Success', 'Items added to cart', backgroundColor: Colors.green, colorText: Colors.white);
       setState(() {
         _bulkSelections.clear();
-        _isListView = false;
+        _isBulkMode = false;
       });
     }
   }
@@ -200,165 +203,250 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       return const Center(child: Text('No products found in this category.'));
     }
 
-    return Skeletonizer(
-      enabled: isLoading,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          int cartQty = 0;
-          if (cart != null) {
-            for (final item in cart.items) {
-              if (item.productId == product.id) {
-                cartQty = item.quantity;
-                break;
-              }
-            }
-          }
-          final isStockReached = cartQty >= product.quantity;
-          
-          if (_isListView) {
-            return _buildBulkAddTile(product, isLoading, isStockReached);
-          }
-
-          final favProvider = ref.read(favoritesProvider.notifier);
-          final isFav = favProvider.isFavorite(product.id);
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6750A4).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.inventory_2, color: Color(0xFF6750A4)),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(height: 4),
-                            Text('${product.category} • Qty: ${product.quantity}',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 4),
-                            Text('Code: ${product.productCode}',
-                                style: TextStyle(color: Colors.grey[400], fontSize: 10)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('\$${product.price.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF6750A4))),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff')
-                                IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.edit_note, color: Colors.blue),
-                                  onPressed: () => _showUpdateQuantityDialog(context, ref, product),
-                                ),
-                              const SizedBox(width: 8),
-                              if (!isStockReached && !isLoading)
-                                IconButton(
-                                  constraints: const BoxConstraints(),
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF6750A4)),
-                                  onPressed: () async {
-                                    try {
-                                      await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
-                                      ref.invalidate(cartProvider);
-                                      Get.snackbar('Cart', '${product.name} added to cart',
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: const Color(0xFF6750A4),
-                                        colorText: Colors.white,
-                                      );
-                                    } catch (e) {
-                                      Get.snackbar('Error', e.toString());
-                                    }
-                                  },
-                                ),
-                              if (isStockReached && !isLoading)
-                                const Icon(Icons.check_circle, color: Colors.green, size: 24),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+    if (_isBulkMode) {
+      // Keep bulk mode as a vertical list for easier scanning and quantity adjusting
+      return Skeletonizer(
+        enabled: isLoading,
+        child: AnimationLimiter(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              return AnimationConfiguration.staggeredList(
+                position: index,
+                duration: const Duration(milliseconds: 400),
+                child: SlideAnimation(
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(
+                    child: _buildBulkAddTile(products[index], isLoading),
                   ),
                 ),
-                if (!isLoading)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: IconButton(
-                      icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red),
-                      onPressed: () => favProvider.toggleFavorite(product.id),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Modern 2026 Glassmorphic Grid for standard product viewing
+    return Skeletonizer(
+      enabled: isLoading,
+      child: AnimationLimiter(
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.68,
+          ),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final product = products[index];
+            int cartQty = 0;
+            if (cart != null) {
+              for (final item in cart.items) {
+                if (item.productId == product.id) {
+                  cartQty = item.quantity;
+                  break;
+                }
+              }
+            }
+            final isStockReached = cartQty >= product.quantity;
+            final favProvider = ref.read(favoritesProvider.notifier);
+            final isFav = favProvider.isFavorite(product.id);
+
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              columnCount: 2,
+              duration: const Duration(milliseconds: 500),
+              child: ScaleAnimation(
+                child: FadeInAnimation(
+                  child: _buildGlassmorphicProductCard(context, ref, product, isFav, isStockReached, isLoading, user),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildBulkAddTile(ProductModel product, bool isLoading, bool isStockReached) {
-    if (product.quantity <= 0) return const SizedBox.shrink(); // Don't show OOS items in bulk mode
+  Widget _buildGlassmorphicProductCard(BuildContext context, WidgetRef ref, ProductModel product, bool isFav, bool isStockReached, bool isLoading, dynamic user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.05) : theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : theme.colorScheme.primary.withOpacity(0.1),
+              width: 1.5,
+            ),
+            boxShadow: isDark ? [] : [
+              BoxShadow(
+                color: theme.shadowColor.withOpacity(0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Center(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(Icons.inventory_2, size: 48, color: theme.colorScheme.primary.withOpacity(0.7)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${product.category} • Qty: ${product.quantity}',
+                      style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\$${product.price.toStringAsFixed(2)}',
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: theme.colorScheme.primary),
+                        ),
+                        if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff')
+                          GestureDetector(
+                            onTap: () => _showUpdateQuantityDialog(context, ref, product),
+                            child: const Icon(Icons.edit_note, color: Colors.blue, size: 24),
+                          )
+                        else if (!isStockReached && !isLoading)
+                          GestureDetector(
+                            onTap: () async {
+                              try {
+                                await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                                ref.invalidate(cartProvider);
+                                Get.snackbar('Cart', '${product.name} added to cart',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: theme.colorScheme.primary,
+                                  colorText: Colors.white,
+                                );
+                              } catch (e) {
+                                Get.snackbar('Error', e.toString());
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 16),
+                            ),
+                          )
+                        else if (isStockReached && !isLoading)
+                          const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (!isLoading)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red),
+                    onPressed: () => ref.read(favoritesProvider.notifier).toggleFavorite(product.id),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBulkAddTile(ProductModel product, bool isLoading) {
+    if (product.quantity <= 0) return const SizedBox.shrink();
 
     final currentSelected = _bulkSelections[product.id] ?? 0;
-    final maxSelectable = product.quantity; // Not accounting for what's already in cart for simplicity
+    final maxSelectable = product.quantity;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('\$${product.price.toStringAsFixed(2)} | In Stock: ${product.quantity}'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: currentSelected > 0 ? () {
-                setState(() {
-                  _bulkSelections[product.id] = currentSelected - 1;
-                });
-              } : null,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+            boxShadow: isDark ? [] : [
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.inventory_2, color: Theme.of(context).colorScheme.primary),
             ),
-            Text('$currentSelected', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: currentSelected < maxSelectable ? () {
-                setState(() {
-                  _bulkSelections[product.id] = currentSelected + 1;
-                });
-              } : null,
+            title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: Text('\$${product.price.toStringAsFixed(2)} | In Stock: ${product.quantity}', style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600])),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: currentSelected > 0 ? () {
+                    setState(() {
+                      _bulkSelections[product.id] = currentSelected - 1;
+                    });
+                  } : null,
+                ),
+                Text('$currentSelected', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: currentSelected < maxSelectable ? () {
+                    setState(() {
+                      _bulkSelections[product.id] = currentSelected + 1;
+                    });
+                  } : null,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -369,10 +457,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Update Quantity: ${product.name}'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'New Quantity'),
+          decoration: InputDecoration(
+            labelText: 'New Quantity',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          ),
           keyboardType: TextInputType.number,
           autofocus: true,
         ),
