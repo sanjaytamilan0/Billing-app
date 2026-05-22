@@ -128,7 +128,9 @@ The application supports distinct workflows depending on the user's role (e.g., 
 * **Login:** Upon login, a JWT is issued to the device and securely stored. This token is attached to all subsequent protected API requests.
 
 ### 2. Product Discovery & Shopping
-* **Browsing:** Users can view categories and explore available products.
+* **Browsing:** Users can view categories and explore available products dynamically.
+* **AI-driven Recommendations:** Suggests products horizontally at the top of the shopping screen based on a user's previous order history and company profile.
+* **Product Suggestions Workflow:** Standard users can submit new product suggestions along with a smart category selection (using existing categories or proposing new ones).
 * **Cart Management:** Users can add products to their cart. The app enforces inventory checks (stock limits), meaning users cannot add more items than what is currently available. 
 
 ### 3. Order Processing & Invoicing
@@ -167,7 +169,9 @@ Here are the potential feature upgrades planned for future releases, organized b
 * **Read Receipts & Typing Indicators:** Provide better visual feedback during live chat sessions.
 
 ### 5. Owner, Admin & Staff Operations
-* **Analytics & Dashboard Reporting:** Visual charts and graphs giving Owners insights into sales trends, top-selling products, and revenue over time.
+* **Product Suggestion Reviews:** Owners/Staff receive a dedicated list of pending product suggestions. They can review, edit details (like price), and seamlessly "Accept & Add" the product (which automatically creates the product and category in the database).
+* **Analytics & Dashboard Reporting:** Visual charts and graphs giving Owners insights into sales trends (7-day revenue line charts), top-selling products, and summary metrics.
+* **Company Ownership:** The **Owner** acts as the primary administrator for their company. They can manage all inventory, oversee all orders, and respond to all customer chats.
 * **Automated Low-Stock Alerts:** Push notifications or emails sent to staff and owners when a product's inventory drops below a specific threshold.
 
 ### App-wide Improvements

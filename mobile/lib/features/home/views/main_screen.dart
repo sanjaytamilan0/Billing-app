@@ -77,7 +77,7 @@ class DashboardTab extends ConsumerWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Text(user?.companyName ?? 'Dashboard'.tr),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -111,14 +111,14 @@ class DashboardTab extends ConsumerWidget {
               children: [
                 _buildDashBox(
                   context,
-                  'New Order',
-                  Icons.add_shopping_cart,
+                  'Shop Products'.tr,
+                  Icons.shopping_cart,
                   Colors.blue,
                   () => Get.toNamed(Routes.products),
                 ),
                 _buildDashBox(
                   context,
-                  'View Orders',
+                  'View Orders'.tr,
                   Icons.receipt_long,
                   Colors.orange,
                   () => Get.toNamed(Routes.orderList),
@@ -126,7 +126,7 @@ class DashboardTab extends ConsumerWidget {
                 if (user?.role == 'owner' || user?.role == 'super_admin')
                   _buildDashBox(
                     context,
-                    'Staff',
+                    'Staff'.tr,
                     Icons.people,
                     Colors.green,
                     () => Get.toNamed(Routes.staffManagement),
@@ -134,7 +134,7 @@ class DashboardTab extends ConsumerWidget {
                 if (user?.role == 'user')
                   _buildDashBox(
                     context,
-                    'Suggest Product',
+                    'Suggest Product'.tr,
                     Icons.lightbulb,
                     Colors.amber,
                     () => Get.toNamed(Routes.suggestProduct),
@@ -142,7 +142,7 @@ class DashboardTab extends ConsumerWidget {
                 if (user?.role == 'owner' || user?.role == 'staff' || user?.role == 'super_admin')
                   _buildDashBox(
                     context,
-                    'Suggestions',
+                    'Suggestions'.tr,
                     Icons.rate_review,
                     Colors.amber,
                     () => Get.toNamed(Routes.reviewSuggestions),
@@ -150,21 +150,28 @@ class DashboardTab extends ConsumerWidget {
                 if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff')
                   _buildDashBox(
                     context,
-                    'Analytics',
+                    'Analytics'.tr,
                     Icons.insights,
                     Colors.indigo,
                     () => Get.toNamed(Routes.analytics),
                   ),
                 _buildDashBox(
                   context,
-                  'Profile',
+                  'Profile'.tr,
                   Icons.person,
                   Colors.purple,
                   () => Get.toNamed(Routes.profile),
                 ),
                 _buildDashBox(
                   context,
-                  'Chat',
+                  'Settings'.tr,
+                  Icons.settings,
+                  Colors.blueGrey,
+                  () => Get.toNamed(Routes.settings),
+                ),
+                _buildDashBox(
+                  context,
+                  'Chat'.tr,
                   Icons.chat,
                   Colors.teal,
                   () async {
