@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import '../providers/suggestion_provider.dart';
+import '../providers/category_provider.dart';
 
 class SuggestProductScreen extends ConsumerStatefulWidget {
   const SuggestProductScreen({super.key});
@@ -47,6 +48,8 @@ class _SuggestProductScreenState extends ConsumerState<SuggestProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Suggest a Product')),
       body: SingleChildScrollView(
@@ -63,10 +66,35 @@ class _SuggestProductScreenState extends ConsumerState<SuggestProductScreen> {
                 onSaved: (v) => _name = v!,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-                onSaved: (v) => _category = v!,
+              categoriesAsync.when(
+                data: (categories) {
+                  final catNames = categories.map((c) => c.name).toList();
+                  return Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) return catNames;
+                      return catNames.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      _category = selection;
+                    },
+                    fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                      return TextFormField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Category (Select or type new)', 
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                        onSaved: (v) => _category = v!,
+                      );
+                    },
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (err, stack) => const Text('Error loading categories'),
               ),
               const SizedBox(height: 16),
               TextFormField(

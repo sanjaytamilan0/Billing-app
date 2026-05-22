@@ -627,6 +627,21 @@ app.patch('/api/suggestions/:id/status', auth, async (req, res) => {
 
         // If accepted, auto-create the Product
         if (status === 'accepted') {
+            // Check if category exists, if not, create it
+            const existingCategory = await Category.findOne({ 
+                name: new RegExp(`^${suggestion.category}$`, 'i'), 
+                companyName: suggestion.companyName 
+            });
+
+            if (!existingCategory) {
+                const newCat = new Category({
+                    name: suggestion.category,
+                    companyName: suggestion.companyName,
+                    createdBy: currentUser._id
+                });
+                await newCat.save();
+            }
+
             const productCode = Math.random().toString(36).substring(2, 10).toUpperCase() + 
                                 Math.random().toString(36).substring(2, 10).toUpperCase();
 
