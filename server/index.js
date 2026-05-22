@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Note = require('./models/Note');
 const Product = require('./models/Product');
+const ProductSuggestion = require('./models/ProductSuggestion');
 const Category = require('./models/Category');
 const Cart = require('./models/Cart');
 const Order = require('./models/Order');
@@ -524,6 +525,128 @@ app.get('/api/products', auth, async (req, res) => {
 
         const products = await Product.find(query).populate('createdBy', 'phone role');
         res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Product Suggestion APIs ---
+
+// 12b. Create a product suggestion (Users)
+app.post('/api/suggestions', auth, async (req, res) => {
+    try {
+        const { name, category, description, price } = req.body;
+        const currentUser = req.user;
+
+        const suggestion = new ProductSuggestion({
+            name,
+            category,
+            description,
+            price: price || 0,
+            companyName: currentUser.companyName,
+            suggestedBy: currentUser._id
+        });
+
+        await suggestion.save();
+        res.status(201).json({ message: 'Suggestion submitted successfully', suggestion });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 12c. Get pending suggestions (Owner/Staff)
+app.get('/api/suggestions', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        let query = { status: 'pending' };
+        if (currentUser.role !== 'super_admin') {
+            query.companyName = currentUser.companyName;
+        }
+
+        const suggestions = await ProductSuggestion.find(query).populate('suggestedBy', 'phone role');
+        res.status(200).json(suggestions);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 12d. Update suggestion details (Owner/Staff)
+app.put('/api/suggestions/:id', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const suggestion = await ProductSuggestion.findById(req.params.id);
+        if (!suggestion) return res.status(404).json({ message: 'Suggestion not found' });
+
+        if (currentUser.role !== 'super_admin' && suggestion.companyName !== currentUser.companyName) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const { name, category, description, price } = req.body;
+        if (name) suggestion.name = name;
+        if (category) suggestion.category = category;
+        if (description) suggestion.description = description;
+        if (price !== undefined) suggestion.price = price;
+
+        await suggestion.save();
+        res.status(200).json({ message: 'Suggestion updated', suggestion });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 12e. Accept/Reject suggestion (Owner/Staff)
+app.patch('/api/suggestions/:id/status', auth, async (req, res) => {
+    try {
+        const { status } = req.body; // 'accepted' or 'rejected'
+        const currentUser = req.user;
+
+        if (!['super_admin', 'owner', 'staff'].includes(currentUser.role)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        if (!['accepted', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+
+        const suggestion = await ProductSuggestion.findById(req.params.id);
+        if (!suggestion) return res.status(404).json({ message: 'Suggestion not found' });
+
+        if (currentUser.role !== 'super_admin' && suggestion.companyName !== currentUser.companyName) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        suggestion.status = status;
+        await suggestion.save();
+
+        // If accepted, auto-create the Product
+        if (status === 'accepted') {
+            const productCode = Math.random().toString(36).substring(2, 10).toUpperCase() + 
+                                Math.random().toString(36).substring(2, 10).toUpperCase();
+
+            const product = new Product({
+                productCode,
+                name: suggestion.name,
+                price: suggestion.price,
+                quantity: 0,
+                category: suggestion.category,
+                description: suggestion.description,
+                companyName: suggestion.companyName,
+                createdBy: currentUser._id,
+                creatorRole: currentUser.role
+            });
+
+            await product.save();
+            return res.status(200).json({ message: 'Suggestion accepted and product created', suggestion, product });
+        }
+
+        res.status(200).json({ message: `Suggestion ${status}`, suggestion });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

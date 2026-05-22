@@ -10,6 +10,8 @@ import '../../features/staff/views/staff_management_screen.dart';
 import '../../features/auth/views/profile_screen.dart';
 import '../../features/home/views/main_screen.dart';
 import '../../features/auth/views/company_selection_screen.dart';
+import '../../features/products/views/suggest_product_screen.dart';
+import '../../features/products/views/review_suggestions_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -59,6 +61,14 @@ class AppPages {
       name: Routes.profile,
       page: () => const ProfileScreen(),
     ),
+    GetPage(
+      name: Routes.suggestProduct,
+      page: () => const SuggestProductScreen(),
+    ),
+    GetPage(
+      name: Routes.reviewSuggestions,
+      page: () => const ReviewSuggestionsScreen(),
+    ),
   ];
 }
 
@@ -74,4 +84,6 @@ abstract class Routes {
   static const orderDetail = '/order-detail';
   static const staffManagement = '/staff-management';
   static const profile = '/profile';
+  static const suggestProduct = '/suggest-product';
+  static const reviewSuggestions = '/review-suggestions';
 }
