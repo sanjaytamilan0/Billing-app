@@ -227,7 +227,13 @@ app.put('/api/users/company', auth, async (req, res) => {
 // 4b. Get Favorites
 app.get('/api/users/favorites', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate('favorites');
+        const user = await User.findById(req.user._id).populate({
+            path: 'favorites',
+            populate: {
+                path: 'createdBy',
+                select: 'phone role'
+            }
+        });
         if (!user) return res.status(404).json({ message: 'User not found' });
         // Filter out nulls or unresolved object IDs so mobile app receives clean objects
         const validFavorites = user.favorites.filter(f => f && typeof f === 'object' && f._id);

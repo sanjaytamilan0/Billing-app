@@ -19,12 +19,17 @@ class FavoritesNotifier extends StateNotifier<AsyncValue<List<ProductModel>>> {
   Future<void> fetchFavorites() async {
     try {
       state = const AsyncValue.loading();
+      print('Favorites API Raw Response: ${response.data}');
       final response = await _dio.get('/api/users/favorites');
       final List<ProductModel> products = (response.data as List)
           .map((item) => ProductModel.fromJson(item))
           .toList();
       state = AsyncValue.data(products);
     } catch (e, st) {
+      print('FetchFavorites Error: $e');
+      if (e is DioException) {
+        print('FetchFavorites DioError Response: ${e.response?.data}');
+      }
       state = AsyncValue.error(e, st);
     }
   }
@@ -36,6 +41,10 @@ class FavoritesNotifier extends StateNotifier<AsyncValue<List<ProductModel>>> {
       await _dio.post('/api/users/favorites/$productId');
       await fetchFavorites(); // Refresh the list
     } catch (e) {
+      print('ToggleFavorite Error: $e');
+      if (e is DioException) {
+        print('ToggleFavorite DioError Response: ${e.response?.data}');
+      }
       // Handle error
     }
   }
