@@ -96,7 +96,7 @@ When you finish an action, give a brief, friendly natural language response (1-2
 DO NOT use markdown formatting in your response. Keep it conversational.`;
 
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         systemInstruction: systemInstruction,
         tools: availableTools,
     });
