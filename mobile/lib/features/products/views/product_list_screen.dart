@@ -61,10 +61,23 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ],
               bottom: TabBar(
                 isScrollable: true,
-                indicatorColor: Theme.of(context).colorScheme.primary,
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.5), width: 1),
+                ),
                 labelColor: Theme.of(context).colorScheme.primary,
                 unselectedLabelColor: Colors.grey,
-                tabs: allCategories.map((name) => Tab(text: name)).toList(),
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                tabAlignment: TabAlignment.start,
+                tabs: allCategories.map((name) => Tab(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(name),
+                  ),
+                )).toList(),
               ),
             ),
             body: _buildBody(context, ref, productState, allCategories, user, cartAsync.value),
