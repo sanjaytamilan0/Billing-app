@@ -118,6 +118,13 @@ class DashboardTab extends ConsumerWidget {
                 ),
                 _buildDashBox(
                   context,
+                  'Favorites'.tr,
+                  Icons.favorite,
+                  Colors.red,
+                  () => Get.toNamed(Routes.favorites),
+                ),
+                _buildDashBox(
+                  context,
                   'View Orders'.tr,
                   Icons.receipt_long,
                   Colors.orange,

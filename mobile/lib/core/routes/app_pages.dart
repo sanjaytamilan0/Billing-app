@@ -14,6 +14,7 @@ import '../../features/products/views/suggest_product_screen.dart';
 import '../../features/products/views/review_suggestions_screen.dart';
 import '../../features/analytics/views/analytics_screen.dart';
 import '../../features/settings/views/settings_screen.dart';
+import '../../features/favorites/views/favorites_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -79,6 +80,10 @@ class AppPages {
       name: Routes.settings,
       page: () => const SettingsScreen(),
     ),
+    GetPage(
+      name: Routes.favorites,
+      page: () => const FavoritesScreen(),
+    ),
   ];
 }
 
@@ -98,4 +103,5 @@ abstract class Routes {
   static const reviewSuggestions = '/review-suggestions';
   static const analytics = '/analytics';
   static const settings = '/settings';
+  static const favorites = '/favorites';
 }

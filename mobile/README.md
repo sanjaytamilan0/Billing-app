@@ -148,35 +148,37 @@ The application supports distinct workflows depending on the user's role (e.g., 
 * **Order Management:** Owners and Staff can update the status of orders as they are processed.
 * **Staff Access:** Owners and Super Admins can create and manage other staff members, assigning them specific permissions and roles within the company.
 
-## 🚀 Future Enhancements / Roadmap (Flow-wise)
+## 🚀 Future Workflow Enhancements & Roadmap
 
-Here are the potential feature upgrades planned for future releases, organized by user workflow:
+Here are the potential feature upgrades and workflow improvements planned for future releases to make the app even more powerful:
 
-### 1. Authentication & Onboarding
-* **Social Login & SSO:** Allow users to register and log in quickly using Google, Apple, or Microsoft accounts.
-* **Two-Factor Authentication (2FA):** Enhance security for Owner and Super Admin accounts.
+### 1. The "Point of Sale" (Walk-in Customer) Workflow
+* **POS Mode:** Give Owners & Staff a dedicated mode on their dashboard to rapidly add items to a cart for a walk-in customer. 
+* **Instant Invoicing:** Process the order instantly and input the customer's WhatsApp number to send them the PDF invoice, bypassing the need for the customer to download the app.
 
-### 2. Product Discovery & Shopping
-* **Advanced Search & Filtering:** Full-text search for products combined with multi-faceted filtering (by price range, availability, and specific attributes).
-* **AI-driven Recommendations:** Suggest products based on a user's previous order history and company profile.
+### 2. The "One-Tap Reorder" Workflow
+* **Re-order Button:** In the "View Orders" screen, add a button next to completed orders that instantly duplicates the exact order into the current cart.
+* **Subscriptions:** Allow users to set up recurring monthly orders for standard office supplies.
 
-### 3. Order Processing & Invoicing
-* **Payment Gateway Integration:** Built-in support for processing online payments (e.g., Stripe, PayPal, Razorpay) directly during checkout.
-* **Order Push Notifications:** Integration with Firebase Cloud Messaging (FCM) to alert users about real-time order status changes.
+### 3. Advanced Product Discovery & Shopping
+* **Barcode / QR Scanner Integration:** A camera button in the search bar allowing staff or users to scan a physical product's barcode and instantly add it to the cart.
+* **Bulk "Quick Add" List View:** A dense spreadsheet-style view where B2B users can type quantities for multiple items at once and hit a single "Add All" button.
+* **Favorites / Wishlist:** Users can tap a heart icon on frequently purchased products to save them to a dedicated tab for instant access.
 
-### 4. Real-time Communication
-* **Media Sharing in Chat:** Allow users and staff to share images, PDFs, or invoice documents directly in the chat.
-* **Read Receipts & Typing Indicators:** Provide better visual feedback during live chat sessions.
+### 4. QR Code / Invite Link Onboarding
+* **Frictionless Joining:** Owners can generate a Company QR Code or Invite Link. When scanned, it automatically registers the user, assigns them to the company, and drops them into the shopping dashboard.
 
-### 5. Owner, Admin & Staff Operations
-* **Product Suggestion Reviews:** Owners/Staff receive a dedicated list of pending product suggestions. They can review, edit details (like price), and seamlessly "Accept & Add" the product (which automatically creates the product and category in the database).
-* **Analytics & Dashboard Reporting:** Visual charts and graphs giving Owners insights into sales trends (7-day revenue line charts), top-selling products, and summary metrics.
-* **Company Ownership:** The **Owner** acts as the primary administrator for their company. They can manage all inventory, oversee all orders, and respond to all customer chats.
-* **Automated Low-Stock Alerts:** Push notifications or emails sent to staff and owners when a product's inventory drops below a specific threshold.
+### 4. Order Approval & Quotation Workflow (B2B Style)
+* **Quote Requests:** For B2B use-cases, users can submit a cart as a "Quote Request".
+* **Approval Flow:** The Owner reviews the quote, optionally applies a discount, and hits "Approve", notifying the user to finalize payment.
 
-### App-wide Improvements
-* **Multi-language Support (Localization):** Adding support for multiple languages and regional formats.
-* **Dark Mode:** A polished system-wide dark theme for the Flutter application.
+### 5. Multi-Cart / "Save for Later" Workflow
+* **Draft Orders:** Allow users and staff to save an active cart as a "Draft" so they can start a fresh cart for a new customer, and restore the draft later.
+
+### App-wide Technical Upgrades
+* **Payment Gateway Integration:** Built-in support for processing online payments (e.g., Stripe, Razorpay) directly during checkout.
+* **Push Notifications:** Firebase Cloud Messaging (FCM) integration for real-time order alerts and low-stock warnings.
+* **Automated PDF Emailing:** Automatically email PDF invoices to users the exact second an order status changes to "Completed".
 
 ## 🤝 Contribution Guidelines
 Follow the feature-based folder structure inside `lib/features/` when adding new functionalities to the app. Make sure to run `build_runner` if you modify or add any Riverpod or Freezed annotations.
