@@ -10,6 +10,9 @@ import '../../../core/routes/app_pages.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../products/providers/product_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../chat/views/chat_list_screen.dart';
+import '../../chat/views/chat_screen.dart';
+import '../../chat/providers/chat_provider.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -130,6 +133,21 @@ class MainScreen extends ConsumerWidget {
         _buildDashBox(context, 'Analytics'.tr, Icons.insights, const Color(0xFF3B82F6), () => Get.toNamed(Routes.analytics)),
       _buildDashBox(context, 'Profile'.tr, Icons.person, const Color(0xFF6366F1), () => Get.toNamed(Routes.profile)),
       _buildDashBox(context, 'Settings'.tr, Icons.settings, const Color(0xFF64748B), () => Get.toNamed(Routes.settings)),
+      _buildDashBox(context, 'Chat'.tr, Icons.chat, const Color(0xFF14B8A6), () async {
+        if (user?.role == 'owner' || user?.role == 'super_admin') {
+          Get.to(() => const ChatListScreen());
+        } else {
+          final owner = await ref.read(companyOwnerProvider.future);
+          if (owner != null) {
+            Get.to(() => ChatScreen(
+              otherUserId: owner.id,
+              otherUserName: 'Company Owner',
+            ));
+          } else {
+            Get.snackbar('Error', 'Owner not found for this company', backgroundColor: Colors.red, colorText: Colors.white);
+          }
+        }
+      }),
     ];
 
     return AnimationLimiter(
