@@ -95,135 +95,174 @@ If they ask to add a product to the cart, FIRST use searchProducts to find the p
 When you finish an action, give a brief, friendly natural language response (1-2 short sentences) because it will be spoken out loud by text-to-speech.
 DO NOT use markdown formatting in your response. Keep it conversational.`;
 
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
-        systemInstruction: systemInstruction,
-        tools: availableTools,
-    });
+    const modelNames = [
+        'gemini-2.0-flash',
+        'gemini-2.0-pro-exp',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-8b',
+        'gemini-1.0-pro',
+        'gemini-pro'
+    ];
 
-    const chat = model.startChat();
+    let lastError = null;
+    let responseText = null;
 
-    let response = await chat.sendMessage(prompt);
-    let functionCalls = response.response.functionCalls();
-    
-    // Process function calls if the model wants to call tools
-    while (functionCalls && functionCalls.length > 0) {
-        const toolResults = [];
-        
-        for (const call of functionCalls) {
-            const name = call.name;
-            const args = call.args;
-            let result;
+    for (const modelName of modelNames) {
+        try {
+            console.log(`Attempting AI response with model: ${modelName}`);
             
-            try {
-                if (name === 'searchProducts') {
-                    const products = await Product.find({
-                        companyName: user.companyName,
-                        $or: [
-                            { name: { $regex: args.query, $options: 'i' } },
-                            { category: { $regex: args.query, $options: 'i' } }
-                        ]
-                    }).limit(5).select('_id name price quantity category');
-                    result = { success: true, products };
-                } 
-                else if (name === 'addToCart') {
-                    const product = await Product.findById(args.productId);
-                    if (!product) throw new Error('Product not found');
-                    if (product.quantity < args.quantity) throw new Error(`Only ${product.quantity} left in stock`);
-                    
-                    let cart = await Cart.findOne({ userId: user._id });
-                    if (!cart) {
-                        cart = new Cart({ userId: user._id, companyName: user.companyName, items: [] });
-                    }
-                    const itemIndex = cart.items.findIndex(p => p.productId.toString() === args.productId);
-                    if (itemIndex > -1) {
-                        cart.items[itemIndex].quantity += args.quantity;
-                    } else {
-                        cart.items.push({
-                            productId: product._id,
-                            name: product.name,
-                            price: product.price,
-                            quantity: args.quantity
-                        });
-                    }
-                    await cart.save();
-                    result = { success: true, message: `Added ${args.quantity} ${product.name} to cart` };
-                }
-                else if (name === 'checkout') {
-                    const cart = await Cart.findOne({ userId: user._id });
-                    if (!cart || cart.items.length === 0) throw new Error('Cart is empty');
-                    
-                    let totalAmount = 0;
-                    for (let item of cart.items) {
-                        const product = await Product.findById(item.productId);
-                        if (!product || product.quantity < item.quantity) {
-                            throw new Error(`Stock issue for ${item.name}. Available: ${product ? product.quantity : 0}, Required: ${item.quantity}`);
-                        }
-                        product.quantity -= item.quantity;
-                        await product.save();
-                        totalAmount += (item.price * item.quantity);
-                    }
-                    
-                    const order = new Order({
-                        userId: user._id,
-                        userRole: user.role,
-                        companyName: user.companyName,
-                        items: cart.items,
-                        totalAmount,
-                        status: 'paid'
-                    });
-                    await order.save();
-                    await Cart.findOneAndDelete({ userId: user._id });
-                    result = { success: true, orderId: order._id, total: totalAmount };
-                }
-                else if (name === 'suggestProduct') {
-                    const suggestion = new ProductSuggestion({
-                        name: args.name,
-                        description: args.description || '',
-                        category: args.category,
-                        suggestedBy: user._id,
-                        companyName: user.companyName,
-                        status: 'pending'
-                    });
-                    await suggestion.save();
-                    result = { success: true, message: "Suggestion submitted successfully" };
-                }
-                else if (name === 'addProduct') {
-                    if (user.role !== 'staff' && user.role !== 'owner') throw new Error('Unauthorized');
-                    const product = new Product({
-                        productCode: args.productCode,
-                        name: args.name,
-                        price: args.price,
-                        quantity: args.quantity,
-                        category: args.category,
-                        description: args.description || '',
-                        companyName: user.companyName,
-                        createdBy: user._id,
-                        creatorRole: user.role
-                    });
-                    await product.save();
-                    result = { success: true, message: "Product created", productId: product._id };
-                }
-                else {
-                    result = { error: "Unknown tool" };
-                }
-            } catch (err) {
-                console.error("AI Tool Error:", err); result = { error: err.message };
-            }
-            
-            toolResults.push({
-                functionResponse: {
-                    name: call.name,
-                    response: result
-                }
+            const model = genAI.getGenerativeModel({
+                model: modelName,
+                systemInstruction: systemInstruction,
+                tools: availableTools,
             });
+
+            const chat = model.startChat();
+
+            let response = await chat.sendMessage(prompt);
+            let functionCalls = response.response.functionCalls();
+            
+            // Process function calls if the model wants to call tools
+            while (functionCalls && functionCalls.length > 0) {
+                const toolResults = [];
+                
+                for (const call of functionCalls) {
+                    const name = call.name;
+                    const args = call.args;
+                    let result;
+                    
+                    try {
+                        if (name === 'searchProducts') {
+                            const products = await Product.find({
+                                companyName: user.companyName,
+                                $or: [
+                                    { name: { $regex: args.query, $options: 'i' } },
+                                    { category: { $regex: args.query, $options: 'i' } }
+                                ]
+                            }).limit(5).select('_id name price quantity category');
+                            result = { success: true, products };
+                        } 
+                        else if (name === 'addToCart') {
+                            const product = await Product.findById(args.productId);
+                            if (!product) throw new Error('Product not found');
+                            if (product.quantity < args.quantity) throw new Error(`Only ${product.quantity} left in stock`);
+                            
+                            let cart = await Cart.findOne({ userId: user._id });
+                            if (!cart) {
+                                cart = new Cart({ userId: user._id, companyName: user.companyName, items: [] });
+                            }
+                            const itemIndex = cart.items.findIndex(p => p.productId.toString() === args.productId);
+                            if (itemIndex > -1) {
+                                cart.items[itemIndex].quantity += args.quantity;
+                            } else {
+                                cart.items.push({
+                                    productId: product._id,
+                                    name: product.name,
+                                    price: product.price,
+                                    quantity: args.quantity
+                                });
+                            }
+                            await cart.save();
+                            result = { success: true, message: `Added ${args.quantity} ${product.name} to cart` };
+                        }
+                        else if (name === 'checkout') {
+                            const cart = await Cart.findOne({ userId: user._id });
+                            if (!cart || cart.items.length === 0) throw new Error('Cart is empty');
+                            
+                            let totalAmount = 0;
+                            for (let item of cart.items) {
+                                const product = await Product.findById(item.productId);
+                                if (!product || product.quantity < item.quantity) {
+                                    throw new Error(`Stock issue for ${item.name}. Available: ${product ? product.quantity : 0}, Required: ${item.quantity}`);
+                                }
+                                product.quantity -= item.quantity;
+                                await product.save();
+                                totalAmount += (item.price * item.quantity);
+                            }
+                            
+                            const order = new Order({
+                                userId: user._id,
+                                userRole: user.role,
+                                companyName: user.companyName,
+                                items: cart.items,
+                                totalAmount,
+                                status: 'paid'
+                            });
+                            await order.save();
+                            await Cart.findOneAndDelete({ userId: user._id });
+                            result = { success: true, orderId: order._id, total: totalAmount };
+                        }
+                        else if (name === 'suggestProduct') {
+                            const suggestion = new ProductSuggestion({
+                                name: args.name,
+                                description: args.description || '',
+                                category: args.category,
+                                suggestedBy: user._id,
+                                companyName: user.companyName,
+                                status: 'pending'
+                            });
+                            await suggestion.save();
+                            result = { success: true, message: "Suggestion submitted successfully" };
+                        }
+                        else if (name === 'addProduct') {
+                            if (user.role !== 'staff' && user.role !== 'owner') throw new Error('Unauthorized');
+                            const product = new Product({
+                                productCode: args.productCode,
+                                name: args.name,
+                                price: args.price,
+                                quantity: args.quantity,
+                                category: args.category,
+                                description: args.description || '',
+                                companyName: user.companyName,
+                                createdBy: user._id,
+                                creatorRole: user.role
+                            });
+                            await product.save();
+                            result = { success: true, message: "Product created", productId: product._id };
+                        }
+                        else {
+                            result = { error: "Unknown tool" };
+                        }
+                    } catch (err) {
+                        console.error("AI Tool Error:", err); result = { error: err.message };
+                    }
+                    
+                    toolResults.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: result
+                        }
+                    });
+                }
+                
+                response = await chat.sendMessage(toolResults);
+                functionCalls = response.response.functionCalls();
+            }
+
+            responseText = response.response.text();
+            break; // If successful, exit the loop
+            
+        } catch (error) {
+            console.error(`Error with model ${modelName}:`, error.message);
+            lastError = error;
+            
+            // Only retry on rate limit / quota errors
+            const errMsg = error.message.toLowerCase();
+            if (error.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('too many requests')) {
+                console.log(`Model ${modelName} exceeded quota. Switching to next model...`);
+                continue; // Try next model
+            } else {
+                throw error; // If it's a different error (e.g., parsing, internal server), throw it
+            }
         }
-        
-        response = await chat.sendMessage(toolResults);
-        functionCalls = response.response.functionCalls();
     }
 
-    return response.response.text();
+    if (!responseText) {
+        throw lastError || new Error("Failed to generate response from all available models due to quota limits.");
+    }
+
+    return responseText;
 }
 
 module.exports = { processChat };
