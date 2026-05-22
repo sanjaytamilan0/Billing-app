@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../providers/analytics_provider.dart';
 import '../models/analytics_model.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -36,15 +37,15 @@ class AnalyticsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSummaryCards(data.summary),
+          _buildSummaryCards(data.summary).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
           const SizedBox(height: 32),
-          const Text('Revenue Over Time (Last 30 Active Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Revenue Over Time (Last 30 Active Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
           const SizedBox(height: 16),
-          _buildRevenueChart(data.dailyRevenue),
+          _buildRevenueChart(data.dailyRevenue).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
           const SizedBox(height: 32),
-          const Text('Top 5 Selling Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Top 5 Selling Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
           const SizedBox(height: 16),
-          _buildTopProducts(data.topProducts),
+          _buildTopProducts(data.topProducts).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
         ],
       ),
     );
@@ -66,17 +67,15 @@ class AnalyticsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -168,15 +167,25 @@ class AnalyticsScreen extends ConsumerWidget {
       itemBuilder: (context, index) {
         final p = products[index];
         return Card(
-          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: const Color(0xFF7C3AED).withOpacity(0.2)),
+          ),
+          margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: const Color(0xFF6750A4).withOpacity(0.1),
-              child: Text('#${index + 1}', style: const TextStyle(color: Color(0xFF6750A4), fontWeight: FontWeight.bold)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF7C3AED).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Text('#${index + 1}', style: const TextStyle(color: Color(0xFF7C3AED), fontWeight: FontWeight.bold, fontSize: 16)),
             ),
-            title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Qty Sold: ${p.totalQuantity}'),
-            trailing: Text('\$${p.totalRevenue.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+            title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: Text('Qty Sold: ${p.totalQuantity}', style: TextStyle(color: Colors.grey[600])),
+            trailing: Text('\$${p.totalRevenue.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w900, fontSize: 18)),
           ),
         );
       },

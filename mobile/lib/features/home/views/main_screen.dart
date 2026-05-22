@@ -1,214 +1,163 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import '../../products/views/product_list_screen.dart';
-import '../../orders/views/order_list_screen.dart';
-import '../../auth/views/profile_screen.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../../core/routes/app_pages.dart';
-import '../../chat/views/chat_list_screen.dart';
-import '../../chat/views/chat_screen.dart';
-import '../../chat/providers/chat_provider.dart';
-import '../../products/providers/product_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+
+import '../../../core/routes/app_pages.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../products/providers/product_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../company/providers/company_provider.dart';
+import '../../chatbot/views/chatbot_screen.dart';
+import '../../chatbot/views/chat_list_screen.dart';
 
-
-class MainScreen extends ConsumerStatefulWidget {
+class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
 
   @override
-  ConsumerState<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends ConsumerState<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const DashboardTab(),
-    const ProductListScreen(),
-    const OrderListScreen(),
-    const ProfileScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    print('DEBUG: Building MainScreen at index $_currentIndex');
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.toNamed(Routes.chatbot),
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.auto_awesome, color: Colors.white),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF6750A4),
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Dash'),
-            BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Catalog'),
-            BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DashboardTab extends ConsumerWidget {
-  const DashboardTab({super.key});
-
-  @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).value;
-    
+    final user = ref.watch(currentUserProvider);
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(user?.companyName ?? 'Dashboard'.tr),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authStateProvider.notifier).logout();
-              Get.offAllNamed(Routes.login);
-            },
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Get.toNamed(Routes.chatbot),
+        backgroundColor: theme.colorScheme.primary,
+        icon: const Icon(Icons.auto_awesome, color: Colors.white)
+            .animate(onPlay: (controller) => controller.repeat())
+            .shimmer(duration: 2.seconds)
+            .scaleXY(end: 1.1, duration: 1.seconds, curve: Curves.easeInOut)
+            .then()
+            .scaleXY(end: 1.0, duration: 1.seconds, curve: Curves.easeInOut),
+        label: const Text('AI Assistant', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      )
+          .animate(onPlay: (controller) => controller.repeat())
+          .shimmer(duration: 3.seconds, color: Colors.white24)
+          .elevate(),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -50,
+                      right: -50,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ).animate().fade(duration: 2.seconds).scale(begin: const Offset(0.8, 0.8)),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                            ).animate().fadeIn(delay: 200.ms).slideX(),
+                            Text(
+                              user?.phone ?? 'User',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ).animate().fadeIn(delay: 400.ms).slideX(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Dashboard',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+                  const SizedBox(height: 16),
+                  _buildAnimatedGrid(context, user, ref),
+                  const SizedBox(height: 32),
+                  _buildRecommendations(ref),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Hello, ${user?.phone ?? 'User'}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              user?.role.toUpperCase() ?? '',
-              style: TextStyle(color: Colors.grey[600], letterSpacing: 1.2, fontSize: 12),
-            ),
-            const SizedBox(height: 32),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              children: [
-                _buildDashBox(
-                  context,
-                  'Shop Products'.tr,
-                  Icons.shopping_cart,
-                  Colors.blue,
-                  () => Get.toNamed(Routes.products),
-                ),
-                _buildDashBox(
-                  context,
-                  'Favorites'.tr,
-                  Icons.favorite,
-                  Colors.red,
-                  () => Get.toNamed(Routes.favorites),
-                ),
-                _buildDashBox(
-                  context,
-                  'View Orders'.tr,
-                  Icons.receipt_long,
-                  Colors.orange,
-                  () => Get.toNamed(Routes.orderList),
-                ),
-                if (user?.role == 'owner' || user?.role == 'super_admin')
-                  _buildDashBox(
-                    context,
-                    'Staff'.tr,
-                    Icons.people,
-                    Colors.green,
-                    () => Get.toNamed(Routes.staffManagement),
-                  ),
-                if (user?.role == 'user')
-                  _buildDashBox(
-                    context,
-                    'Suggest Product'.tr,
-                    Icons.lightbulb,
-                    Colors.amber,
-                    () => Get.toNamed(Routes.suggestProduct),
-                  ),
-                if (user?.role == 'owner' || user?.role == 'staff' || user?.role == 'super_admin')
-                  _buildDashBox(
-                    context,
-                    'Suggestions'.tr,
-                    Icons.rate_review,
-                    Colors.amber,
-                    () => Get.toNamed(Routes.reviewSuggestions),
-                  ),
-                if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff')
-                  _buildDashBox(
-                    context,
-                    'Analytics'.tr,
-                    Icons.insights,
-                    Colors.indigo,
-                    () => Get.toNamed(Routes.analytics),
-                  ),
-                _buildDashBox(
-                  context,
-                  'Profile'.tr,
-                  Icons.person,
-                  Colors.purple,
-                  () => Get.toNamed(Routes.profile),
-                ),
-                _buildDashBox(
-                  context,
-                  'Settings'.tr,
-                  Icons.settings,
-                  Colors.blueGrey,
-                  () => Get.toNamed(Routes.settings),
-                ),
-                _buildDashBox(
-                  context,
-                  'Chat'.tr,
-                  Icons.chat,
-                  Colors.teal,
-                  () async {
-                    if (user?.role == 'owner' || user?.role == 'super_admin') {
-                      Get.to(() => const ChatListScreen());
-                    } else {
-                      // Find owner and go to chat
-                      final owner = await ref.read(companyOwnerProvider.future);
-                      if (owner != null) {
-                        Get.to(() => ChatScreen(
-                          otherUserId: owner.id,
-                          otherUserName: 'Company Owner',
-                        ));
-                      } else {
-                        Get.snackbar('Error', 'Owner not found for this company');
-                      }
-                    }
-                  },
-                ),
-              ],
+    );
+  }
 
-            ),
-            const SizedBox(height: 32),
-            _buildRecommendations(ref),
-          ],
+  Widget _buildAnimatedGrid(BuildContext context, user, WidgetRef ref) {
+    final List<Widget> dashBoxes = [
+      _buildDashBox(context, 'Products'.tr, Icons.inventory_2, const Color(0xFF8B5CF6), () => Get.toNamed(Routes.productList)),
+      _buildDashBox(context, 'Cart'.tr, Icons.shopping_cart, const Color(0xFFEC4899), () => Get.toNamed(Routes.cart)),
+      _buildDashBox(context, 'Favorites'.tr, Icons.favorite, const Color(0xFFF43F5E), () => Get.toNamed(Routes.favorites)),
+      _buildDashBox(context, 'Orders'.tr, Icons.receipt_long, const Color(0xFFF59E0B), () => Get.toNamed(Routes.orderList)),
+      if (user?.role == 'owner' || user?.role == 'super_admin')
+        _buildDashBox(context, 'Staff'.tr, Icons.people, const Color(0xFF10B981), () => Get.toNamed(Routes.staffManagement)),
+      if (user?.role == 'user')
+        _buildDashBox(context, 'Suggest'.tr, Icons.lightbulb, const Color(0xFFEAB308), () => Get.toNamed(Routes.suggestProduct)),
+      if (user?.role == 'owner' || user?.role == 'staff' || user?.role == 'super_admin')
+        _buildDashBox(context, 'Review'.tr, Icons.rate_review, const Color(0xFFEAB308), () => Get.toNamed(Routes.reviewSuggestions)),
+      if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff')
+        _buildDashBox(context, 'Analytics'.tr, Icons.insights, const Color(0xFF3B82F6), () => Get.toNamed(Routes.analytics)),
+      _buildDashBox(context, 'Profile'.tr, Icons.person, const Color(0xFF6366F1), () => Get.toNamed(Routes.profile)),
+      _buildDashBox(context, 'Settings'.tr, Icons.settings, const Color(0xFF64748B), () => Get.toNamed(Routes.settings)),
+    ];
+
+    return AnimationLimiter(
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.1,
+        children: List.generate(
+          dashBoxes.length,
+          (int index) {
+            return AnimationConfiguration.staggeredGrid(
+              position: index,
+              duration: const Duration(milliseconds: 500),
+              columnCount: 2,
+              child: ScaleAnimation(
+                child: FadeInAnimation(
+                  child: dashBoxes[index],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -222,69 +171,94 @@ class DashboardTab extends ConsumerWidget {
       children: [
         const Text(
           'Recommended For You',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2),
         const SizedBox(height: 16),
         SizedBox(
-          height: 160,
+          height: 180,
           child: recommendationsAsync.when(
             data: (products) {
               if (products.isEmpty) {
                 return const Center(child: Text('No recommendations yet'));
               }
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return Container(
-                    width: 140,
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: Icon(Icons.inventory_2, size: 40, color: Colors.purple.withOpacity(0.5)),
+              return AnimationLimiter(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return AnimationConfiguration.staggeredList(
+                      position: index,
+                      duration: const Duration(milliseconds: 500),
+                      child: SlideAnimation(
+                        horizontalOffset: 50.0,
+                        child: FadeInAnimation(
+                          child: Container(
+                            width: 150,
+                            margin: const EdgeInsets.only(right: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context).shadowColor.withOpacity(0.05),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Center(
+                                    child: Icon(Icons.inventory_2, size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  product.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '\$${product.price.toStringAsFixed(2)}',
+                                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        try {
+                                          await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                                          Get.snackbar('Success', 'Added to cart', backgroundColor: Colors.green.withOpacity(0.9), colorText: Colors.white);
+                                        } catch (e) {
+                                          Get.snackbar('Error', 'Could not add to cart', backgroundColor: Colors.red.withOpacity(0.9), colorText: Colors.white);
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 20),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          product.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.purple)),
-                            GestureDetector(
-                              onTap: () async {
-                                try {
-                                  await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
-                                  Get.snackbar('Success', 'Added to cart');
-                                } catch (e) {
-                                  Get.snackbar('Error', 'Could not add to cart');
-                                }
-                              },
-                              child: const Icon(Icons.add_circle, color: Colors.green, size: 20),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               );
             },
             loading: () => Skeletonizer(
@@ -293,9 +267,12 @@ class DashboardTab extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: 3,
                 itemBuilder: (context, index) => Container(
-                  width: 140,
+                  width: 150,
                   margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
               ),
             ),
@@ -307,31 +284,53 @@ class DashboardTab extends ConsumerWidget {
   }
 
   Widget _buildDashBox(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 40, color: color),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.05) : color.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : color.withOpacity(0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: onTap,
+              splashColor: color.withOpacity(0.2),
+              highlightColor: color.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 32, color: color),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
