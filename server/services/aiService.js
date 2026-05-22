@@ -1,16 +1,16 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const ProductSuggestion = require('../models/ProductSuggestion');
 const User = require('../models/User');
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 async function processChat(user, prompt) {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error('GEMINI_API_KEY is not set. Please add it to your .env file.');
     }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     const availableTools = [];
 
@@ -43,10 +43,6 @@ async function processChat(user, prompt) {
             {
                 name: "checkout",
                 description: "Checkout the current cart and place an order.",
-                parameters: {
-                    type: "OBJECT",
-                    properties: {}
-                }
             },
             {
                 name: "suggestProduct",
@@ -65,7 +61,6 @@ async function processChat(user, prompt) {
         ]
     };
     
-    // Add base tools
     availableTools.push(baseTools);
 
     // If staff or owner, they can add products
@@ -100,22 +95,22 @@ If they ask to add a product to the cart, FIRST use searchProducts to find the p
 When you finish an action, give a brief, friendly natural language response (1-2 short sentences) because it will be spoken out loud by text-to-speech.
 DO NOT use markdown formatting in your response. Keep it conversational.`;
 
-    const chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-            systemInstruction: systemInstruction,
-            tools: availableTools,
-            temperature: 0.2
-        }
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemInstruction,
+        tools: availableTools,
     });
 
-    let response = await chat.sendMessage({ message: prompt });
+    const chat = model.startChat();
+
+    let response = await chat.sendMessage(prompt);
+    let functionCalls = response.response.functionCalls();
     
     // Process function calls if the model wants to call tools
-    while (response.functionCalls && response.functionCalls.length > 0) {
+    while (functionCalls && functionCalls.length > 0) {
         const toolResults = [];
         
-        for (const call of response.functionCalls) {
+        for (const call of functionCalls) {
             const name = call.name;
             const args = call.args;
             let result;
@@ -224,11 +219,11 @@ DO NOT use markdown formatting in your response. Keep it conversational.`;
             });
         }
         
-        // Send tool results back to the model to get the final text response
-        response = await chat.sendMessage({ message: toolResults });
+        response = await chat.sendMessage(toolResults);
+        functionCalls = response.response.functionCalls();
     }
 
-    return response.text;
+    return response.response.text();
 }
 
 module.exports = { processChat };
