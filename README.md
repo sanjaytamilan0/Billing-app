@@ -41,6 +41,10 @@ Base URL: `https://billing-app-k53w.onrender.com`
 - `GET /api/products/code/:code` - Scan product
 - `POST /api/cart` - Add items to cart
 - `POST /api/orders` - Checkout and create order
+- `GET /api/chat/history/:otherUserId` - Get message history
+- `GET /api/chat/participants` - List chat users (Owner only)
+- `GET /api/chat/owner` - Find company owner (Staff/User only)
+
 
 ---
 
@@ -63,6 +67,25 @@ The mobile application is built with **Flutter** for cross-platform support (iOS
 - **Inventory Scanner**: Integrated QR/Barcode scanning for the 16-character product codes.
 - **Live Billing**: Real-time cart management and order processing.
 - **Staff Management**: Interface for managing company staff and permissions.
+- **Real-Time Chat**: Direct communication between Owner, Staff, and Users.
+
+---
+
+## 💬 Real-Time Chat System
+
+The chat system uses **Socket.io** for real-time communication and enforces role-based routing rules to maintain order and privacy within each company.
+
+### How it Works:
+1. **Authentication**: WebSockets use the same JWT token as the REST APIs. The token is passed in the `auth` handshake.
+2. **Room Isolation**: Each user joins a private room named after their `userId`. Messages are routed to these specific rooms.
+3. **Routing Rules**:
+   - **Owners**: Can view a list of all Staff and Users in their company. They can initiate a chat with anyone.
+   - **Staff & Users**: Can only chat with the **Owner** of their company. When they tap "Chat", they are directly connected to the owner.
+   - **Company Isolation**: Users can only see and message people belonging to the same `companyName`.
+4. **Data Persistence**: All messages are saved to MongoDB, allowing users to see their full conversation history upon re-connecting.
+
+---
+
 
 ---
 

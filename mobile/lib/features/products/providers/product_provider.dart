@@ -11,6 +11,16 @@ class ProductRepository {
   final Dio _dio;
   ProductRepository(this._dio);
 
+  Future<List<ProductModel>> getRecommendations() async {
+    try {
+      final response = await _dio.get('/api/products/recommendations');
+      final List data = response.data;
+      return data.map((json) => ProductModel.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<ProductModel>> getProducts() async {
     try {
       print('Fetching products from API...');
@@ -119,3 +129,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
 
 // Keep a simple accessor for convenience if needed
 final productsProvider = Provider((ref) => ref.watch(productsNotifierProvider).products);
+
+final recommendedProductsProvider = FutureProvider.autoDispose<List<ProductModel>>((ref) async {
+  return ref.watch(productRepositoryProvider).getRecommendations();
+});

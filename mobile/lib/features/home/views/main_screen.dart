@@ -9,6 +9,9 @@ import '../../../core/routes/app_pages.dart';
 import '../../chat/views/chat_list_screen.dart';
 import '../../chat/views/chat_screen.dart';
 import '../../chat/providers/chat_provider.dart';
+import '../../products/providers/product_provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import '../../cart/providers/cart_provider.dart';
 
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -160,9 +163,103 @@ class DashboardTab extends ConsumerWidget {
               ],
 
             ),
+            const SizedBox(height: 32),
+            _buildRecommendations(ref),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRecommendations(WidgetRef ref) {
+    final recommendationsAsync = ref.watch(recommendedProductsProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Recommended For You',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 160,
+          child: recommendationsAsync.when(
+            data: (products) {
+              if (products.isEmpty) {
+                return const Center(child: Text('No recommendations yet'));
+              }
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Container(
+                    width: 140,
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Icon(Icons.inventory_2, size: 40, color: Colors.purple.withOpacity(0.5)),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          product.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.purple)),
+                            GestureDetector(
+                              onTap: () async {
+                                try {
+                                  await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                                  Get.snackbar('Success', 'Added to cart');
+                                } catch (e) {
+                                  Get.snackbar('Error', 'Could not add to cart');
+                                }
+                              },
+                              child: const Icon(Icons.add_circle, color: Colors.green, size: 20),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => Skeletonizer(
+              enabled: true,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (context, index) => Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ),
+            error: (e, st) => const Center(child: Text('Could not load recommendations')),
+          ),
+        ),
+      ],
     );
   }
 

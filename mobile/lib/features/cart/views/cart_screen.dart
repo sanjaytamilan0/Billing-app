@@ -70,22 +70,23 @@ class CartScreen extends ConsumerWidget {
                                   },
                                 ),
                                 Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                                  onPressed: item.quantity >= item.stock 
-                                    ? null 
-                                    : () async {
-                                        try {
-                                          await ref.read(cartRepositoryProvider).updateCartItemQuantity(item.productId, item.quantity + 1);
-                                          ref.refresh(cartProvider);
-                                        } catch (e) {
-                                          Get.snackbar('Error', e.toString());
-                                        }
-                                      },
-                                  color: item.quantity >= item.stock ? Colors.grey : Colors.green,
-                                ),
-                                if (item.quantity >= item.stock)
-                                  const Text('Max', style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                                if (item.quantity < item.stock)
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                    onPressed: () async {
+                                      try {
+                                        await ref.read(cartRepositoryProvider).updateCartItemQuantity(item.productId, item.quantity + 1);
+                                        ref.refresh(cartProvider);
+                                      } catch (e) {
+                                        Get.snackbar('Error', e.toString());
+                                      }
+                                    },
+                                  )
+                                else
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Text('Max', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ),
                               ],
                             ),
                           ],

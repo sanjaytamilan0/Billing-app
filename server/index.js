@@ -448,6 +448,67 @@ app.get('/api/products/code/:code', auth, async (req, res) => {
     }
 });
 
+// 11a. Get AI-Driven Recommendations
+app.get('/api/products/recommendations', auth, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const companyName = currentUser.companyName;
+
+        let orderQuery = { companyName };
+        if (currentUser.role === 'user') {
+            orderQuery.userId = currentUser._id;
+        }
+
+        const recentOrders = await Order.find(orderQuery)
+            .sort({ createdAt: -1 })
+            .limit(10);
+
+        let categoryCounts = {};
+        let purchasedProductIds = new Set();
+
+        recentOrders.forEach(order => {
+            order.items.forEach(item => {
+                if (item.productId) purchasedProductIds.add(item.productId.toString());
+            });
+        });
+
+        if (purchasedProductIds.size > 0) {
+            const purchasedProducts = await Product.find({ _id: { $in: Array.from(purchasedProductIds) } });
+            purchasedProducts.forEach(product => {
+                if (product.category) {
+                    categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
+                }
+            });
+        }
+
+        const topCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+        let recommendations = [];
+
+        if (topCategories.length > 0) {
+            recommendations = await Product.find({
+                companyName: companyName,
+                category: { $in: topCategories.slice(0, 3) }
+            })
+            .sort({ quantity: -1 })
+            .limit(5)
+            .populate('createdBy', 'phone role');
+        }
+
+        // Fallback
+        if (recommendations.length === 0) {
+            recommendations = await Product.find({ companyName: companyName })
+                .sort({ quantity: -1, createdAt: -1 })
+                .limit(5)
+                .populate('createdBy', 'phone role');
+        }
+
+        res.status(200).json(recommendations);
+    } catch (error) {
+        console.error('Recommendations Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 12. List Products (Role-based)
 app.get('/api/products', auth, async (req, res) => {
     try {
