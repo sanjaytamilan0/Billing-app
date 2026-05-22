@@ -229,7 +229,9 @@ app.get('/api/users/favorites', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id).populate('favorites');
         if (!user) return res.status(404).json({ message: 'User not found' });
-        res.status(200).json(user.favorites);
+        // Filter out nulls or unresolved object IDs so mobile app receives clean objects
+        const validFavorites = user.favorites.filter(f => f && typeof f === 'object' && f._id);
+        res.status(200).json(validFavorites);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -242,7 +244,8 @@ app.post('/api/users/favorites/:productId', auth, async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         const productId = req.params.productId;
-        const index = user.favorites.indexOf(productId);
+        // Use findIndex with toString() to safely match ObjectIds to string
+        const index = user.favorites.findIndex(id => id.toString() === productId);
         
         if (index > -1) {
             user.favorites.splice(index, 1);
@@ -251,7 +254,7 @@ app.post('/api/users/favorites/:productId', auth, async (req, res) => {
         }
         
         await user.save();
-        res.status(200).json({ message: 'Favorites updated successfully', favorites: user.favorites });
+        res.status(200).json({ message: 'Favorites updated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
