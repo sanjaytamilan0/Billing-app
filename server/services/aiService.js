@@ -96,7 +96,7 @@ When you finish an action, give a brief, friendly natural language response (1-2
 DO NOT use markdown formatting in your response. Keep it conversational.`;
 
     const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: systemInstruction,
         tools: availableTools,
     });
@@ -208,7 +208,7 @@ DO NOT use markdown formatting in your response. Keep it conversational.`;
                     result = { error: "Unknown tool" };
                 }
             } catch (err) {
-                result = { error: err.message };
+                console.error("AI Tool Error:", err); result = { error: err.message };
             }
             
             toolResults.push({

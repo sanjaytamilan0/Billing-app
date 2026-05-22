@@ -1,0 +1,4 @@
+MONGO_URL=mongodb+srv://sanjaytamilan0_db_user:Sanjay1392%40@cluster0.lmkdkfn.mongodb.net/
+JWT_SECRET=any_random_string
+PORT=10000
+GEMINI_API_KEY=AIzaSyBr6eOkCk7waCXbxfb1XTCl3awxbGc4sq0

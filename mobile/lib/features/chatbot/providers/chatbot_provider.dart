@@ -38,7 +38,9 @@ class ChatbotNotifier extends StateNotifier<ChatbotState> {
     );
 
     try {
+      print('🤖 Sending chat prompt: $text');
       final response = await _dio.post('/api/chat', data: {'prompt': text});
+      print('🤖 Received chat response: ${response.data}');
       final replyText = response.data['reply'] ?? 'No response';
       
       state = state.copyWith(
@@ -47,13 +49,17 @@ class ChatbotNotifier extends StateNotifier<ChatbotState> {
       );
       return replyText;
     } on DioException catch (e) {
-      final errorMsg = e.response?.data?['message'] ?? e.message;
+      print('🔴 Chatbot DioException: $e');
+      print('🔴 Chatbot DioException Data: ${e.response?.data}');
+      final errorMsg = e.response?.data?['message'] ?? e.response?.data?['error'] ?? e.message;
       state = state.copyWith(
         messages: [...state.messages, ChatMessage(text: 'Error: $errorMsg', isUser: false)],
         isLoading: false
       );
       return 'Error: $errorMsg';
-    } catch (e) {
+    } catch (e, st) {
+      print('🔴 Chatbot Unexpected Error: $e');
+      print('🔴 Stacktrace: $st');
       state = state.copyWith(
         messages: [...state.messages, ChatMessage(text: 'Unexpected Error: $e', isUser: false)],
         isLoading: false

@@ -1126,6 +1126,10 @@ app.get('/api/orders/:id/invoice', async (req, res) => {
 });
 
 // 12. AI Chatbot
+app.get('/api/test-env', (req, res) => {
+    res.json({ key: process.env.GEMINI_API_KEY || "NOT_SET", all: Object.keys(process.env) });
+});
+
 app.post("/api/chat", auth, async (req, res) => {
     try {
         const { prompt } = req.body;
