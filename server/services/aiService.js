@@ -97,12 +97,12 @@ DO NOT use markdown formatting in your response. Keep it conversational.`;
 
     const modelNames = [
         'gemini-2.0-flash',
-        'gemini-2.0-pro-exp',
         'gemini-1.5-pro',
         'gemini-1.5-flash',
         'gemini-1.5-flash-8b',
         'gemini-1.0-pro',
-        'gemini-pro'
+        'gemini-pro',
+        'gemini-2.0-flash-exp'
     ];
 
     let lastError = null;
@@ -247,10 +247,11 @@ DO NOT use markdown formatting in your response. Keep it conversational.`;
             console.error(`Error with model ${modelName}:`, error.message);
             lastError = error;
             
-            // Only retry on rate limit / quota errors
+            // Retry on rate limit, quota, OR 404/not found errors
             const errMsg = error.message.toLowerCase();
-            if (error.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('too many requests')) {
-                console.log(`Model ${modelName} exceeded quota. Switching to next model...`);
+            if (error.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('too many requests') || 
+                error.status === 404 || errMsg.includes('404') || errMsg.includes('not found')) {
+                console.log(`Model ${modelName} failed or unavailable. Switching to next model...`);
                 continue; // Try next model
             } else {
                 throw error; // If it's a different error (e.g., parsing, internal server), throw it
