@@ -161,11 +161,11 @@ class OrderDetailScreen extends ConsumerWidget {
           onPressed: () async {
             try {
               print('Staff clicking Complete Order for order ${order.id}...');
-              await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
+              final message = await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
               print('Complete Order API call finished successfully');
               ref.invalidate(ordersProvider);
               Get.back();
-              Get.snackbar('Order Update', 'Order marked as Completed by Staff. Invoice emailed!');
+              Get.snackbar('Order Update', message);
             } catch (e) {
               print('Complete Order API Error: $e');
               Get.snackbar('Error', 'Failed to complete: $e');

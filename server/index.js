@@ -1065,15 +1065,38 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
                 const senderEmail = process.env.SMTP_EMAIL;
                 const senderPassword = process.env.SMTP_PASSWORD;
                 
-                if (senderEmail && recipientEmail) {
-                    // Fire and forget to avoid delaying the API response
-                    generateInvoicePDF(order).then(pdfBuffer => {
-                        return sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order, pdfBuffer);
-                    }).catch(emailError => {
-                        console.error("Failed to generate or send invoice email:", emailError);
-                    });
+                if (recipientEmail) {
+                    try {
+                        const pdfBuffer = await generateInvoicePDF(order);
+                        const emailResult = await sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order, pdfBuffer);
+                        
+                        if (emailResult.success) {
+                            return res.status(200).json({ 
+                                message: 'Order status updated and invoice emailed successfully', 
+                                emailSuccess: true,
+                                previewUrl: emailResult.previewUrl,
+                                order 
+                            });
+                        } else {
+                            return res.status(200).json({ 
+                                message: `Order completed, but email failed: ${emailResult.message}`, 
+                                emailSuccess: false,
+                                order 
+                            });
+                        }
+                    } catch (emailError) {
+                        return res.status(200).json({ 
+                            message: `Order completed, but email crashed: ${emailError.message}`, 
+                            emailSuccess: false,
+                            order 
+                        });
+                    }
                 } else {
-                    console.log("Missing sender (in .env) or recipient email. Ignoring email dispatch.");
+                    return res.status(200).json({ 
+                        message: 'Order completed. (No user email found to send invoice)', 
+                        emailSuccess: false,
+                        order 
+                    });
                 }
             } catch (err) {
                 console.error("Error setting up invoice email:", err);

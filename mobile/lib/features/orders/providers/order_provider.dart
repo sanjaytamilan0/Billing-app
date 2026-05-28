@@ -44,11 +44,12 @@ class OrderRepository {
     }
   }
 
-  Future<void> updateOrderStatus(String orderId, String status) async {
+  Future<String> updateOrderStatus(String orderId, String status) async {
     try {
       print('Updating order $orderId to status $status');
       final response = await _dio.put('/api/orders/$orderId/status', data: {'status': status});
       print('Update Status Response: ${response.data}');
+      return response.data['message'] ?? 'Order updated successfully';
     } on DioException catch (e) {
       print('UpdateOrderStatus DioError: ${e.response?.data}');
       final msg = e.response?.data?['message'];
