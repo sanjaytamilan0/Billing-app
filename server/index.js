@@ -1066,34 +1066,19 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
                 const senderPassword = process.env.SMTP_PASSWORD;
                 
                 if (recipientEmail) {
-                    try {
-                        const pdfBuffer = await generateInvoicePDF(order);
-                        const emailResult = await sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order, pdfBuffer);
-                        
-                        if (emailResult.success) {
-                            return res.status(200).json({ 
-                                message: 'Order status updated and invoice emailed successfully', 
-                                emailSuccess: true,
-                                previewUrl: emailResult.previewUrl,
-                                order 
-                            });
-                        } else {
-                            return res.status(200).json({ 
-                                message: `Order completed, but email failed: ${emailResult.message}`, 
-                                emailSuccess: false,
-                                order 
-                            });
-                        }
-                    } catch (emailError) {
-                        return res.status(200).json({ 
-                            message: `Order completed, but email crashed: ${emailError.message}`, 
-                            emailSuccess: false,
-                            order 
-                        });
-                    }
+                    // Fire and forget so we do not block the frontend or get a 30s timeout
+                    sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order).catch(err => {
+                        console.error("Background email failed:", err);
+                    });
+                    
+                    return res.status(200).json({ 
+                        message: 'Order status updated and text email is sending...', 
+                        emailSuccess: true,
+                        order 
+                    });
                 } else {
                     return res.status(200).json({ 
-                        message: 'Order completed. (No user email found to send invoice)', 
+                        message: 'Order completed. (No user email found to send text email)', 
                         emailSuccess: false,
                         order 
                     });
