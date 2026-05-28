@@ -153,19 +153,26 @@ class OrderDetailScreen extends ConsumerWidget {
 
     // 2. Staff sees 'paid' and clicks 'Complete Order'
     if (role == 'staff' && status == 'paid') {
-      return ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-        onPressed: () async {
-          try {
-            await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
-            ref.invalidate(ordersProvider);
-            Get.back();
-            Get.snackbar('Order Update', 'Order marked as Completed by Staff.');
-          } catch (e) {
-            Get.snackbar('Error', e.toString());
-          }
-        },
-        child: const Text('Complete Order'),
+      return SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+          onPressed: () async {
+            try {
+              print('Staff clicking Complete Order for order ${order.id}...');
+              await ref.read(orderRepositoryProvider).updateOrderStatus(order.id, 'completed');
+              print('Complete Order API call finished successfully');
+              ref.invalidate(ordersProvider);
+              Get.back();
+              Get.snackbar('Order Update', 'Order marked as Completed by Staff. Invoice emailed!');
+            } catch (e) {
+              print('Complete Order API Error: $e');
+              Get.snackbar('Error', 'Failed to complete: $e');
+            }
+          },
+          child: const Text('Complete Order (Send Invoice)'),
+        ),
       );
     }
 
