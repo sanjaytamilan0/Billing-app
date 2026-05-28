@@ -1055,19 +1055,30 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
         // If order is completed, send PDF invoice to user and admin
         if (status === 'completed') {
             try {
-                const orderUser = await User.findById(order.userId);
+                const currentUser = await User.findById(req.user._id);
                 const owner = await User.findOne({ companyName: order.companyName, role: 'owner' });
                 
-                const userEmail = orderUser ? orderUser.email : null;
-                const adminEmail = owner ? owner.email : null;
+                // Determine sender email
+                let senderEmail = null;
+                if (owner && owner.email) {
+                    senderEmail = owner.email;
+                } else if (currentUser && currentUser.email) {
+                    senderEmail = currentUser.email;
+                }
+
+                // Determine recipient email (user)
+                const orderUser = await User.findById(order.userId);
+                const recipientEmail = orderUser ? orderUser.email : null;
                 
-                if (userEmail || adminEmail) {
+                if (senderEmail && recipientEmail) {
                     // Fire and forget to avoid delaying the API response
                     generateInvoicePDF(order).then(pdfBuffer => {
-                        return sendInvoiceEmail(userEmail, adminEmail, order, pdfBuffer);
+                        return sendInvoiceEmail(senderEmail, "password", recipientEmail, order, pdfBuffer);
                     }).catch(emailError => {
                         console.error("Failed to generate or send invoice email:", emailError);
                     });
+                } else {
+                    console.log("Missing sender or recipient email. Ignoring email dispatch.");
                 }
             } catch (err) {
                 console.error("Error setting up invoice email:", err);
