@@ -13,6 +13,8 @@ const Cart = require('./models/Cart');
 const Order = require('./models/Order');
 const auth = require('./middleware/auth');
 const aiService = require('./services/aiService');
+const { generateInvoicePDF } = require('./services/pdfService');
+const { sendInvoiceEmail } = require('./services/emailService');
 
 const path = require('path');
 
@@ -1049,6 +1051,30 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
         }
 
         await order.save();
+        
+        // If order is completed, send PDF invoice to user and admin
+        if (status === 'completed') {
+            try {
+                const orderUser = await User.findById(order.userId);
+                const owner = await User.findOne({ companyName: order.companyName, role: 'owner' });
+                
+                const userEmail = orderUser ? orderUser.email : null;
+                const adminEmail = owner ? owner.email : null;
+                
+                if (userEmail || adminEmail) {
+                    const pdfBuffer = await generateInvoicePDF(order);
+                    const previewUrl = await sendInvoiceEmail(userEmail, adminEmail, order, pdfBuffer);
+                    return res.status(200).json({ 
+                        message: 'Order status updated and invoice sent', 
+                        order,
+                        emailPreviewUrl: previewUrl 
+                    });
+                }
+            } catch (emailError) {
+                console.error("Failed to send invoice email:", emailError);
+            }
+        }
+
         res.status(200).json({ message: 'Order status updated', order });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -1082,60 +1108,14 @@ app.get('/api/orders/:id/invoice', async (req, res) => {
             return res.status(403).json({ message: 'Access denied' });
         }
 
-        const PDFDocument = require('pdfkit');
-        const doc = new PDFDocument({ margin: 50 });
+        const pdfBuffer = await generateInvoicePDF(order);
 
         // HTTP headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.id}.pdf`);
+        res.setHeader('Content-Length', pdfBuffer.length);
 
-        doc.pipe(res);
-
-        // Header
-        doc.fillColor('#444444')
-           .fontSize(20)
-           .text('INVOICE', 110, 57)
-           .fontSize(10)
-           .text(order.companyName, 200, 65, { align: 'right' })
-           .text('Billing App System', 200, 80, { align: 'right' })
-           .moveDown();
-
-        // Order Info
-        doc.fillColor('#000000')
-           .fontSize(10)
-           .text(`Order ID: ${order.id}`, 50, 150)
-           .text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 50, 165)
-           .text(`Status: ${order.status.toUpperCase()}`, 50, 180)
-           .moveDown();
-
-        // Table Header
-        const tableTop = 230;
-        doc.font('Helvetica-Bold');
-        doc.text('Item', 50, tableTop);
-        doc.text('Quantity', 250, tableTop, { width: 90, align: 'right' });
-        doc.text('Price', 340, tableTop, { width: 90, align: 'right' });
-        doc.text('Total', 430, tableTop, { width: 90, align: 'right' });
-        doc.moveTo(50, tableTop + 15).lineTo(520, tableTop + 15).stroke();
-
-        // Table Rows
-        let position = tableTop + 30;
-        doc.font('Helvetica');
-        order.items.forEach(item => {
-            doc.text(item.name, 50, position);
-            doc.text(item.quantity.toString(), 250, position, { width: 90, align: 'right' });
-            doc.text(`$${item.price.toFixed(2)}`, 340, position, { width: 90, align: 'right' });
-            doc.text(`$${(item.price * item.quantity).toFixed(2)}`, 430, position, { width: 90, align: 'right' });
-            position += 20;
-        });
-
-        // Summary
-        doc.moveTo(50, position + 10).lineTo(520, position + 10).stroke();
-        doc.font('Helvetica-Bold');
-        doc.fontSize(12)
-           .text('GRAND TOTAL:', 340, position + 25, { width: 90, align: 'right' })
-           .text(`$${order.totalAmount.toFixed(2)}`, 430, position + 25, { width: 90, align: 'right' });
-
-        doc.end();
+        res.send(pdfBuffer);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
