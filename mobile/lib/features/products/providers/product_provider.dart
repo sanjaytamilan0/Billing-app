@@ -4,6 +4,9 @@ import '../models/product_model.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'product_state.dart';
+enum ProductViewType { list, grid, card, page, compact, timeline, table }
+
+final productViewTypeProvider = StateProvider<ProductViewType>((ref) => ProductViewType.grid);
 
 final productRepositoryProvider = Provider((ref) => ProductRepository(ref.watch(dioProvider)));
 

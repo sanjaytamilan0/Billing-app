@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cart_model.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/providers/auth_provider.dart';
+enum CartViewType { list, grid, card, page, compact, timeline, table }
+
+final cartViewTypeProvider = StateProvider<CartViewType>((ref) => CartViewType.list);
 
 final cartRepositoryProvider = Provider((ref) => CartRepository(ref.watch(dioProvider)));
 

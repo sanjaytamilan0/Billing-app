@@ -29,6 +29,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final productState = ref.watch(productsNotifierProvider);
+    final viewType = ref.watch(productViewTypeProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final cartAsync = ref.watch(cartProvider);
     final user = ref.watch(authStateProvider).value;
@@ -47,6 +48,20 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             appBar: AppBar(
               title: const Text('Shop Products', style: TextStyle(fontWeight: FontWeight.bold)),
               actions: [
+                PopupMenuButton<ProductViewType>(
+                  icon: const Icon(Icons.view_comfy_alt),
+                  tooltip: 'Change View Layout',
+                  onSelected: (type) => ref.read(productViewTypeProvider.notifier).state = type,
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: ProductViewType.list, child: ListTile(leading: Icon(Icons.view_list), title: Text('List View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.grid, child: ListTile(leading: Icon(Icons.grid_view), title: Text('Grid View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.card, child: ListTile(leading: Icon(Icons.credit_card), title: Text('Card View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.page, child: ListTile(leading: Icon(Icons.view_carousel), title: Text('Page View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.compact, child: ListTile(leading: Icon(Icons.view_headline), title: Text('Compact View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.timeline, child: ListTile(leading: Icon(Icons.timeline), title: Text('Timeline View'), contentPadding: EdgeInsets.zero)),
+                    PopupMenuItem(value: ProductViewType.table, child: ListTile(leading: Icon(Icons.table_chart), title: Text('Table View'), contentPadding: EdgeInsets.zero)),
+                  ],
+                ),
                 IconButton(
                   icon: Icon(_isBulkMode ? Icons.close : Icons.checklist_rtl),
                   tooltip: 'Bulk Add Mode',
@@ -80,7 +95,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 )).toList(),
               ),
             ),
-            body: _buildBody(context, ref, productState, allCategories, user, cartAsync.value),
+            body: _buildBody(context, ref, productState, viewType, allCategories, user, cartAsync.value),
             floatingActionButton: _isBulkMode ? _buildBulkAddFAB() : _buildFAB(user),
           ),
         );
@@ -90,10 +105,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, List<String> allCategories, dynamic user, dynamic cart) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, ProductState state, ProductViewType viewType, List<String> allCategories, dynamic user, dynamic cart) {
     switch (state.status) {
       case ProductStatus.loading:
-        return _buildLoadingList(context, ref);
+        return _buildLoadingList(context, ref, viewType);
       case ProductStatus.failed:
         return _buildErrorWidget(ref, state.errorMessage ?? 'Unknown error');
       case ProductStatus.success:
@@ -115,13 +130,13 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 filteredProducts = filteredProducts.where((p) => p.quantity > 0).toList();
               }
             }
-            return _buildProductList(context, ref, filteredProducts, false, user, cart);
+            return _buildProductList(context, ref, filteredProducts, viewType, false, user, cart);
           }).toList(),
         );
     }
   }
 
-  Widget _buildLoadingList(BuildContext context, WidgetRef ref) {
+  Widget _buildLoadingList(BuildContext context, WidgetRef ref, ProductViewType viewType) {
     return _buildProductList(
       context,
       ref,
@@ -133,6 +148,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         category: 'Category',
         companyName: 'Company',
       )),
+      viewType,
       true,
       null,
       null,
@@ -211,7 +227,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     }
   }
 
-  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+  Widget _buildProductList(BuildContext context, WidgetRef ref, List<ProductModel> products, ProductViewType viewType, bool isLoading, dynamic user, dynamic cart) {
     if (products.isEmpty && !isLoading) {
       return const Center(child: Text('No products found in this category.'));
     }
@@ -241,47 +257,318 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       );
     }
 
-    // Modern 2026 Glassmorphic Grid for standard product viewing
+    Widget content;
+    switch (viewType) {
+      case ProductViewType.list:
+        content = _buildListView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.card:
+        content = _buildCardView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.page:
+        content = _buildPageView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.compact:
+        content = _buildCompactView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.timeline:
+        content = _buildTimelineView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.table:
+        content = _buildTableView(context, ref, products, isLoading, user, cart);
+        break;
+      case ProductViewType.grid:
+      default:
+        content = AnimationLimiter(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.68,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              final isStockReached = _checkStock(product, cart);
+              final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+
+              return AnimationConfiguration.staggeredGrid(
+                position: index,
+                columnCount: 2,
+                duration: const Duration(milliseconds: 500),
+                child: ScaleAnimation(
+                  child: FadeInAnimation(
+                    child: _buildGlassmorphicProductCard(context, ref, product, isFav, isStockReached, isLoading, user),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+    }
+    
     return Skeletonizer(
       enabled: isLoading,
-      child: AnimationLimiter(
-        child: GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.68,
-          ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            final product = products[index];
-            int cartQty = 0;
-            if (cart != null) {
-              for (final item in cart.items) {
-                if (item.productId == product.id) {
-                  cartQty = item.quantity;
-                  break;
-                }
-              }
-            }
-            final isStockReached = cartQty >= product.quantity;
-            final favProvider = ref.read(favoritesProvider.notifier);
-            final isFav = favProvider.isFavorite(product.id);
+      child: content,
+    );
+  }
 
-            return AnimationConfiguration.staggeredGrid(
-              position: index,
-              columnCount: 2,
-              duration: const Duration(milliseconds: 500),
-              child: ScaleAnimation(
-                child: FadeInAnimation(
-                  child: _buildGlassmorphicProductCard(context, ref, product, isFav, isStockReached, isLoading, user),
+  bool _checkStock(ProductModel product, dynamic cart) {
+    if (cart == null) return false;
+    for (final item in cart.items) {
+      if (item.productId == product.id) {
+        return item.quantity >= product.quantity;
+      }
+    }
+    return false;
+  }
+
+  // --- NEW VIEW BUILDERS ---
+
+  Widget _buildListView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isStockReached = _checkStock(product, cart);
+        final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+        final theme = Theme.of(context);
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: Icon(Icons.inventory_2, color: theme.colorScheme.primary),
+            title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text('\$${product.price.toStringAsFixed(2)} - Qty: ${product.quantity}'),
+            trailing: _buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCardView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isStockReached = _checkStock(product, cart);
+        final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+        
+        return Card(
+          elevation: 6,
+          margin: const EdgeInsets.only(bottom: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Icon(Icons.image, size: 80, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(product.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(product.category, style: const TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                    Text('\$${product.price.toStringAsFixed(2)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary)),
+                  ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPageView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return PageView.builder(
+      controller: PageController(viewportFraction: 0.8),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isStockReached = _checkStock(product, cart);
+        final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+        
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 10))],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inventory, size: 100, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 24),
+              Text(product.name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900)),
+              const Spacer(),
+              _buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return ListView.separated(
+      itemCount: products.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isStockReached = _checkStock(product, cart);
+        final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+        
+        return ListTile(
+          dense: true,
+          title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text('${product.category} | In Stock: ${product.quantity}'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(width: 8),
+              _buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimelineView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        final isLast = index == products.length - 1;
+        final isStockReached = _checkStock(product, cart);
+        final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+        
+        return IntrinsicHeight(
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Container(width: 16, height: 16, decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle)),
+                  if (!isLast) Expanded(child: Container(width: 2, color: Colors.grey.withOpacity(0.3))),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Added to catalog', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          const SizedBox(height: 8),
+                          Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text('\$${product.price.toStringAsFixed(2)}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          _buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTableView(BuildContext context, WidgetRef ref, List<ProductModel> products, bool isLoading, dynamic user, dynamic cart) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Name', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Price', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Stock', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+          rows: products.map((product) {
+            final isStockReached = _checkStock(product, cart);
+            final isFav = ref.read(favoritesProvider.notifier).isFavorite(product.id);
+            return DataRow(
+              cells: [
+                DataCell(Text(product.name)),
+                DataCell(Text('\$${product.price.toStringAsFixed(2)}')),
+                DataCell(Text(product.quantity.toString())),
+                DataCell(_buildActionRow(context, ref, product, isStockReached, isLoading, isFav, user)),
+              ],
             );
-          },
+          }).toList(),
         ),
       ),
+    );
+  }
+
+  Widget _buildActionRow(BuildContext context, WidgetRef ref, ProductModel product, bool isStockReached, bool isLoading, bool isFav, dynamic user) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red),
+          onPressed: isLoading ? null : () => ref.read(favoritesProvider.notifier).toggleFavorite(product.id),
+        ),
+        if (user?.role.toLowerCase() == 'owner' || user?.role.toLowerCase() == 'staff')
+          IconButton(
+            icon: const Icon(Icons.edit_note, color: Colors.blue),
+            onPressed: () => _showUpdateQuantityDialog(context, ref, product),
+          )
+        else if (!isStockReached && !isLoading)
+          IconButton(
+            icon: const Icon(Icons.add_shopping_cart, color: Colors.green),
+            onPressed: () async {
+              try {
+                await ref.read(cartRepositoryProvider).addToCart(product.id, 1);
+                ref.invalidate(cartProvider);
+                Get.snackbar('Cart', '${product.name} added to cart');
+              } catch (e) {
+                Get.snackbar('Error', e.toString());
+              }
+            },
+          )
+        else if (isStockReached && !isLoading)
+          const Icon(Icons.check_circle, color: Colors.green),
+      ],
     );
   }
 
