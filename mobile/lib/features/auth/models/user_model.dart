@@ -10,6 +10,8 @@ class UserModel with _$UserModel {
     required String phone,
     required String role,
     String? companyName,
+    String? email,
+    String? address,
     @Default([]) List<String> permissions,
     String? token,
   }) = _UserModel;

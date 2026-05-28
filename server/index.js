@@ -206,6 +206,24 @@ app.get('/api/me', auth, async (req, res) => {
     }
 });
 
+// 4d. Update User Profile
+app.put('/api/users/profile', auth, async (req, res) => {
+    try {
+        const { email, address } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (email !== undefined) user.email = email;
+        if (address !== undefined) user.address = address;
+
+        await user.save();
+        res.status(200).json({ message: 'Profile updated successfully', user: { email: user.email, address: user.address } });
+    } catch (error) {
+        console.error('Update Profile Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 4a. Update User Company (For choosing a shop)
 app.put('/api/users/company', auth, async (req, res) => {
     try {

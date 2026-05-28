@@ -7,18 +7,128 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../providers/auth_provider.dart';
 import '../../../core/routes/app_pages.dart';
+import '../models/user_model.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  void _showEditProfileDialog(BuildContext context, UserModel user) {
+    final emailController = TextEditingController(text: user.email);
+    final addressController = TextEditingController(text: user.address);
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Edit Profile'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email (Optional)',
+                        prefixIcon: const Icon(Icons.email),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: addressController,
+                      decoration: InputDecoration(
+                        labelText: 'Address (Optional)',
+                        prefixIcon: const Icon(Icons.location_on),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        if (formKey.currentState!.validate()) {
+                          setState(() => isLoading = true);
+                          try {
+                            await ref.read(authStateProvider.notifier).updateProfile(
+                                  email: emailController.text.trim().isEmpty ? null : emailController.text.trim(),
+                                  address: addressController.text.trim().isEmpty ? null : addressController.text.trim(),
+                                );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Profile updated successfully!')),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error updating profile: $e')),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => isLoading = false);
+                          }
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(authStateProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile', style: TextStyle(fontWeight: FontWeight.bold))),
+      appBar: AppBar(
+        title: const Text('My Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          userAsync.when(
+            data: (user) => user != null
+                ? IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'Edit Profile',
+                    onPressed: () => _showEditProfileDialog(context, user),
+                  )
+                : const SizedBox.shrink(),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: userAsync.when(
         data: (user) {
           if (user == null) return const Center(child: Text('No user data'));
@@ -61,6 +171,10 @@ class ProfileScreen extends ConsumerWidget {
                     _buildProfileItem(context, Icons.phone, 'Phone', user.phone, isDark, theme),
                     _buildProfileItem(context, Icons.badge, 'Role', user.role.toUpperCase(), isDark, theme),
                     _buildProfileItem(context, Icons.business, 'Company', user.companyName ?? 'N/A', isDark, theme),
+                    if (user.email != null && user.email!.isNotEmpty)
+                      _buildProfileItem(context, Icons.email, 'Email', user.email!, isDark, theme),
+                    if (user.address != null && user.address!.isNotEmpty)
+                      _buildProfileItem(context, Icons.location_on, 'Address', user.address!, isDark, theme),
                     const SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,

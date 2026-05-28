@@ -26,6 +26,8 @@ mixin _$UserModel {
   String get phone => throw _privateConstructorUsedError;
   String get role => throw _privateConstructorUsedError;
   String? get companyName => throw _privateConstructorUsedError;
+  String? get email => throw _privateConstructorUsedError;
+  String? get address => throw _privateConstructorUsedError;
   List<String> get permissions => throw _privateConstructorUsedError;
   String? get token => throw _privateConstructorUsedError;
 
@@ -49,6 +51,8 @@ abstract class $UserModelCopyWith<$Res> {
     String phone,
     String role,
     String? companyName,
+    String? email,
+    String? address,
     List<String> permissions,
     String? token,
   });
@@ -73,6 +77,8 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? phone = null,
     Object? role = null,
     Object? companyName = freezed,
+    Object? email = freezed,
+    Object? address = freezed,
     Object? permissions = null,
     Object? token = freezed,
   }) {
@@ -93,6 +99,14 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
             companyName: freezed == companyName
                 ? _value.companyName
                 : companyName // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            email: freezed == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            address: freezed == address
+                ? _value.address
+                : address // ignore: cast_nullable_to_non_nullable
                       as String?,
             permissions: null == permissions
                 ? _value.permissions
@@ -122,6 +136,8 @@ abstract class _$$UserModelImplCopyWith<$Res>
     String phone,
     String role,
     String? companyName,
+    String? email,
+    String? address,
     List<String> permissions,
     String? token,
   });
@@ -145,6 +161,8 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? phone = null,
     Object? role = null,
     Object? companyName = freezed,
+    Object? email = freezed,
+    Object? address = freezed,
     Object? permissions = null,
     Object? token = freezed,
   }) {
@@ -165,6 +183,14 @@ class __$$UserModelImplCopyWithImpl<$Res>
         companyName: freezed == companyName
             ? _value.companyName
             : companyName // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        email: freezed == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        address: freezed == address
+            ? _value.address
+            : address // ignore: cast_nullable_to_non_nullable
                   as String?,
         permissions: null == permissions
             ? _value._permissions
@@ -187,6 +213,8 @@ class _$UserModelImpl implements _UserModel {
     required this.phone,
     required this.role,
     this.companyName,
+    this.email,
+    this.address,
     final List<String> permissions = const [],
     this.token,
   }) : _permissions = permissions;
@@ -203,6 +231,10 @@ class _$UserModelImpl implements _UserModel {
   final String role;
   @override
   final String? companyName;
+  @override
+  final String? email;
+  @override
+  final String? address;
   final List<String> _permissions;
   @override
   @JsonKey()
@@ -217,7 +249,7 @@ class _$UserModelImpl implements _UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, phone: $phone, role: $role, companyName: $companyName, permissions: $permissions, token: $token)';
+    return 'UserModel(id: $id, phone: $phone, role: $role, companyName: $companyName, email: $email, address: $address, permissions: $permissions, token: $token)';
   }
 
   @override
@@ -230,6 +262,8 @@ class _$UserModelImpl implements _UserModel {
             (identical(other.role, role) || other.role == role) &&
             (identical(other.companyName, companyName) ||
                 other.companyName == companyName) &&
+            (identical(other.email, email) || other.email == email) &&
+            (identical(other.address, address) || other.address == address) &&
             const DeepCollectionEquality().equals(
               other._permissions,
               _permissions,
@@ -245,6 +279,8 @@ class _$UserModelImpl implements _UserModel {
     phone,
     role,
     companyName,
+    email,
+    address,
     const DeepCollectionEquality().hash(_permissions),
     token,
   );
@@ -269,6 +305,8 @@ abstract class _UserModel implements UserModel {
     required final String phone,
     required final String role,
     final String? companyName,
+    final String? email,
+    final String? address,
     final List<String> permissions,
     final String? token,
   }) = _$UserModelImpl;
@@ -285,6 +323,10 @@ abstract class _UserModel implements UserModel {
   String get role;
   @override
   String? get companyName;
+  @override
+  String? get email;
+  @override
+  String? get address;
   @override
   List<String> get permissions;
   @override

@@ -72,6 +72,21 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<UserModel> updateProfile({String? email, String? address}) async {
+    try {
+      print('Updating profile...');
+      final response = await _dio.put('/api/users/profile', data: {
+        if (email != null) 'email': email,
+        if (address != null) 'address': address,
+      });
+      print('Update Profile Response: ${response.data}');
+      return UserModel.fromJson(response.data['user']);
+    } catch (e) {
+      print('Update Profile Error: $e');
+      rethrow;
+    }
+  }
 }
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {
@@ -145,6 +160,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   Future<void> logout() async {
     await _storage.clear();
     state = const AsyncValue.data(null);
+  }
+
+  Future<void> updateProfile({String? email, String? address}) async {
+    if (state.value == null) return;
+    
+    state = const AsyncValue.loading();
+    try {
+      final updatedUser = await _repository.updateProfile(email: email, address: address);
+      // Keep the existing token and other state that might not come back from the update
+      final token = state.value?.token;
+      state = AsyncValue.data(updatedUser.copyWith(token: token));
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   void updateUserCompany(String companyName) {

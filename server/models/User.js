@@ -18,6 +18,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        default: null
+    },
+    address: {
+        type: String,
+        default: null
+    },
     token: {
         type: String
     },
