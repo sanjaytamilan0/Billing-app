@@ -1062,16 +1062,15 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
                 const adminEmail = owner ? owner.email : null;
                 
                 if (userEmail || adminEmail) {
-                    const pdfBuffer = await generateInvoicePDF(order);
-                    const previewUrl = await sendInvoiceEmail(userEmail, adminEmail, order, pdfBuffer);
-                    return res.status(200).json({ 
-                        message: 'Order status updated and invoice sent', 
-                        order,
-                        emailPreviewUrl: previewUrl 
+                    // Fire and forget to avoid delaying the API response
+                    generateInvoicePDF(order).then(pdfBuffer => {
+                        return sendInvoiceEmail(userEmail, adminEmail, order, pdfBuffer);
+                    }).catch(emailError => {
+                        console.error("Failed to generate or send invoice email:", emailError);
                     });
                 }
-            } catch (emailError) {
-                console.error("Failed to send invoice email:", emailError);
+            } catch (err) {
+                console.error("Error setting up invoice email:", err);
             }
         }
 
