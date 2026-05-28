@@ -52,8 +52,12 @@ class OrderRepository {
       return response.data['message'] ?? 'Order updated successfully';
     } on DioException catch (e) {
       print('UpdateOrderStatus DioError: ${e.response?.data}');
-      final msg = e.response?.data?['message'];
-      if (msg != null) throw msg;
+      if (e.response?.data is Map) {
+        final msg = (e.response?.data as Map)['message'];
+        if (msg != null) throw msg.toString();
+      } else if (e.response?.statusCode == 502) {
+        throw 'Server is restarting (502). Please wait a minute and try again.';
+      }
       rethrow;
     } catch (e) {
       print('UpdateOrderStatus Error: $e');
