@@ -217,7 +217,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
         if (address !== undefined) user.address = address;
 
         await user.save();
-        res.status(200).json({ message: 'Profile updated successfully', user: { email: user.email, address: user.address } });
+        res.status(200).json({ message: 'Profile updated successfully', user });
     } catch (error) {
         console.error('Update Profile Error:', error);
         res.status(500).json({ error: error.message });
