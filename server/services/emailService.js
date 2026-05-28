@@ -2,17 +2,14 @@ const nodemailer = require('nodemailer');
 
 async function sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order, pdfBuffer) {
     try {
-        // Generate test SMTP service account from ethereal.email (Zero setup required!)
-        let testAccount = await nodemailer.createTestAccount();
-
-        // create reusable transporter object using the default SMTP transport
+        // Use hardcoded test account to eliminate the 5-10 second timeout delay!
         let transporter = nodemailer.createTransport({
             host: "smtp.ethereal.email",
             port: 587,
             secure: false, 
             auth: {
-                user: testAccount.user, 
-                pass: testAccount.pass, 
+                user: "on6eqd7uu45kifoh@ethereal.email", 
+                pass: "SPfE6pRS987N6ua12W", 
             },
         });
 
