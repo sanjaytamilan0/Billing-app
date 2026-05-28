@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 import '../../../core/routes/app_pages.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -14,13 +15,43 @@ import '../../chat/views/chat_list_screen.dart';
 import '../../chat/views/chat_screen.dart';
 import '../../chat/providers/chat_provider.dart';
 
-class MainScreen extends ConsumerWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen> {
+  List<String> _orderedIds = [];
+  String? _lastUserRole;
+
+  void _initializeBoxes(dynamic user) {
+    _orderedIds = ['products', 'cart', 'favorites', 'orders'];
+    if (user?.role == 'owner' || user?.role == 'super_admin') {
+      _orderedIds.add('staff');
+    }
+    if (user?.role == 'user') {
+      _orderedIds.add('suggest');
+    }
+    if (user?.role == 'owner' || user?.role == 'staff' || user?.role == 'super_admin') {
+      _orderedIds.add('review');
+    }
+    if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff') {
+      _orderedIds.add('analytics');
+    }
+    _orderedIds.addAll(['profile', 'settings', 'chat']);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).value;
     final theme = Theme.of(context);
+
+    if (_lastUserRole != user?.role) {
+      _lastUserRole = user?.role;
+      _initializeBoxes(user);
+    }
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -100,10 +131,20 @@ class MainScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Dashboard',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 500)).slideY(begin: 0.2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Dashboard',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ).animate().fadeIn(delay: const Duration(milliseconds: 500)).slideY(begin: 0.2),
+                      Icon(Icons.swipe, color: Colors.grey.withOpacity(0.5), size: 20)
+                          .animate(onPlay: (controller) => controller.repeat())
+                          .moveX(begin: -5, end: 5, duration: const Duration(seconds: 1))
+                          .then()
+                          .moveX(begin: 5, end: -5, duration: const Duration(seconds: 1)),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   _buildAnimatedGrid(context, user, ref),
                   const SizedBox(height: 32),
@@ -117,57 +158,64 @@ class MainScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAnimatedGrid(BuildContext context, user, WidgetRef ref) {
-    final List<Widget> dashBoxes = [
-      _buildDashBox(context, 'Products'.tr, Icons.inventory_2, const Color(0xFF8B5CF6), () => Get.toNamed(Routes.products)),
-      _buildDashBox(context, 'Cart'.tr, Icons.shopping_cart, const Color(0xFFEC4899), () => Get.toNamed(Routes.cart)),
-      _buildDashBox(context, 'Favorites'.tr, Icons.favorite, const Color(0xFFF43F5E), () => Get.toNamed(Routes.favorites)),
-      _buildDashBox(context, 'Orders'.tr, Icons.receipt_long, const Color(0xFFF59E0B), () => Get.toNamed(Routes.orderList)),
-      if (user?.role == 'owner' || user?.role == 'super_admin')
-        _buildDashBox(context, 'Staff'.tr, Icons.people, const Color(0xFF10B981), () => Get.toNamed(Routes.staffManagement)),
-      if (user?.role == 'user')
-        _buildDashBox(context, 'Suggest'.tr, Icons.lightbulb, const Color(0xFFEAB308), () => Get.toNamed(Routes.suggestProduct)),
-      if (user?.role == 'owner' || user?.role == 'staff' || user?.role == 'super_admin')
-        _buildDashBox(context, 'Review'.tr, Icons.rate_review, const Color(0xFFEAB308), () => Get.toNamed(Routes.reviewSuggestions)),
-      if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff')
-        _buildDashBox(context, 'Analytics'.tr, Icons.insights, const Color(0xFF3B82F6), () => Get.toNamed(Routes.analytics)),
-      _buildDashBox(context, 'Profile'.tr, Icons.person, const Color(0xFF6366F1), () => Get.toNamed(Routes.profile)),
-      _buildDashBox(context, 'Settings'.tr, Icons.settings, const Color(0xFF64748B), () => Get.toNamed(Routes.settings)),
-      _buildDashBox(context, 'Chat'.tr, Icons.chat, const Color(0xFF14B8A6), () async {
-        if (user?.role == 'owner' || user?.role == 'super_admin') {
-          Get.to(() => const ChatListScreen());
-        } else {
-          final owner = await ref.read(companyOwnerProvider.future);
-          if (owner != null) {
-            Get.to(() => ChatScreen(
-              otherUserId: owner.id,
-              otherUserName: 'Company Owner',
-            ));
+  Widget _buildDashBoxById(String id, BuildContext context, WidgetRef ref, dynamic user) {
+    switch (id) {
+      case 'products': return _buildDashBox(ValueKey(id), context, 'Products'.tr, Icons.inventory_2, const Color(0xFF8B5CF6), () => Get.toNamed(Routes.products));
+      case 'cart': return _buildDashBox(ValueKey(id), context, 'Cart'.tr, Icons.shopping_cart, const Color(0xFFEC4899), () => Get.toNamed(Routes.cart));
+      case 'favorites': return _buildDashBox(ValueKey(id), context, 'Favorites'.tr, Icons.favorite, const Color(0xFFF43F5E), () => Get.toNamed(Routes.favorites));
+      case 'orders': return _buildDashBox(ValueKey(id), context, 'Orders'.tr, Icons.receipt_long, const Color(0xFFF59E0B), () => Get.toNamed(Routes.orderList));
+      case 'staff': return _buildDashBox(ValueKey(id), context, 'Staff'.tr, Icons.people, const Color(0xFF10B981), () => Get.toNamed(Routes.staffManagement));
+      case 'suggest': return _buildDashBox(ValueKey(id), context, 'Suggest'.tr, Icons.lightbulb, const Color(0xFFEAB308), () => Get.toNamed(Routes.suggestProduct));
+      case 'review': return _buildDashBox(ValueKey(id), context, 'Review'.tr, Icons.rate_review, const Color(0xFFEAB308), () => Get.toNamed(Routes.reviewSuggestions));
+      case 'analytics': return _buildDashBox(ValueKey(id), context, 'Analytics'.tr, Icons.insights, const Color(0xFF3B82F6), () => Get.toNamed(Routes.analytics));
+      case 'profile': return _buildDashBox(ValueKey(id), context, 'Profile'.tr, Icons.person, const Color(0xFF6366F1), () => Get.toNamed(Routes.profile));
+      case 'settings': return _buildDashBox(ValueKey(id), context, 'Settings'.tr, Icons.settings, const Color(0xFF64748B), () => Get.toNamed(Routes.settings));
+      case 'chat': return _buildDashBox(ValueKey(id), context, 'Chat'.tr, Icons.chat, const Color(0xFF14B8A6), () async {
+          if (user?.role == 'owner' || user?.role == 'super_admin') {
+            Get.to(() => const ChatListScreen());
           } else {
-            Get.snackbar('Error', 'Owner not found for this company', backgroundColor: Colors.red, colorText: Colors.white);
+            final owner = await ref.read(companyOwnerProvider.future);
+            if (owner != null) {
+              Get.to(() => ChatScreen(
+                otherUserId: owner.id,
+                otherUserName: 'Company Owner',
+              ));
+            } else {
+              Get.snackbar('Error', 'Owner not found for this company', backgroundColor: Colors.red, colorText: Colors.white);
+            }
           }
-        }
-      }),
-    ];
+        });
+      default: return SizedBox(key: ValueKey(id));
+    }
+  }
 
+  Widget _buildAnimatedGrid(BuildContext context, user, WidgetRef ref) {
     return AnimationLimiter(
-      child: GridView.count(
+      child: ReorderableGridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         childAspectRatio: 1.1,
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            final element = _orderedIds.removeAt(oldIndex);
+            _orderedIds.insert(newIndex, element);
+          });
+        },
         children: List.generate(
-          dashBoxes.length,
+          _orderedIds.length,
           (int index) {
+            final id = _orderedIds[index];
             return AnimationConfiguration.staggeredGrid(
+              key: ValueKey('anim_$id'),
               position: index,
               duration: const Duration(milliseconds: 500),
               columnCount: 2,
               child: ScaleAnimation(
                 child: FadeInAnimation(
-                  child: dashBoxes[index],
+                  child: _buildDashBoxById(id, context, ref, user),
                 ),
               ),
             );
@@ -297,10 +345,11 @@ class MainScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDashBox(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildDashBox(Key key, BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return ClipRRect(
+      key: key,
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
