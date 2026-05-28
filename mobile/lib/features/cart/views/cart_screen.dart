@@ -75,7 +75,7 @@ class CartScreen extends ConsumerWidget {
               content = _buildTimelineView(cart.items, theme, isDark);
               break;
             case CartViewType.table:
-              content = _buildTableView(cart.items, theme, isDark);
+              content = _buildTableView(context, cart.items, theme, isDark);
               break;
             case CartViewType.list:
             default:
@@ -310,7 +310,7 @@ class CartScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTableView(List<dynamic> items, ThemeData theme, bool isDark) {
+  Widget _buildTableView(BuildContext context, List<dynamic> items, ThemeData theme, bool isDark) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
