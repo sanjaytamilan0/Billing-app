@@ -4,6 +4,10 @@ import '../models/order_model.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/providers/auth_provider.dart';
 
+enum OrderViewType { list, grid, card, page, compact, timeline, table }
+
+final orderViewTypeProvider = StateProvider<OrderViewType>((ref) => OrderViewType.list);
+
 final orderRepositoryProvider = Provider((ref) => OrderRepository(ref.watch(dioProvider)));
 
 class OrderRepository {
