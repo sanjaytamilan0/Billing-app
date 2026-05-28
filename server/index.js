@@ -1058,27 +1058,22 @@ app.put('/api/orders/:id/status', auth, async (req, res) => {
                 const currentUser = await User.findById(req.user._id);
                 const owner = await User.findOne({ companyName: order.companyName, role: 'owner' });
                 
-                // Determine sender email
-                let senderEmail = null;
-                if (owner && owner.email) {
-                    senderEmail = owner.email;
-                } else if (currentUser && currentUser.email) {
-                    senderEmail = currentUser.email;
-                }
-
                 // Determine recipient email (user)
                 const orderUser = await User.findById(order.userId);
                 const recipientEmail = orderUser ? orderUser.email : null;
                 
+                const senderEmail = process.env.SMTP_EMAIL;
+                const senderPassword = process.env.SMTP_PASSWORD;
+                
                 if (senderEmail && recipientEmail) {
                     // Fire and forget to avoid delaying the API response
                     generateInvoicePDF(order).then(pdfBuffer => {
-                        return sendInvoiceEmail(senderEmail, "password", recipientEmail, order, pdfBuffer);
+                        return sendInvoiceEmail(senderEmail, senderPassword, recipientEmail, order, pdfBuffer);
                     }).catch(emailError => {
                         console.error("Failed to generate or send invoice email:", emailError);
                     });
                 } else {
-                    console.log("Missing sender or recipient email. Ignoring email dispatch.");
+                    console.log("Missing sender (in .env) or recipient email. Ignoring email dispatch.");
                 }
             } catch (err) {
                 console.error("Error setting up invoice email:", err);
