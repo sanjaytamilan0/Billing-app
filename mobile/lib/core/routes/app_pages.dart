@@ -16,6 +16,7 @@ import '../../features/analytics/views/analytics_screen.dart';
 import '../../features/settings/views/settings_screen.dart';
 import '../../features/favorites/views/favorites_screen.dart';
 import '../../features/chatbot/views/chatbot_screen.dart';
+import '../../features/ocr/views/ocr_list_screen.dart';
 
 class AppPages {
   static const initial = Routes.login;
@@ -89,6 +90,10 @@ class AppPages {
       name: Routes.chatbot,
       page: () => const ChatbotScreen(),
     ),
+    GetPage(
+      name: Routes.ocrList,
+      page: () => const OcrListScreen(),
+    ),
   ];
 }
 
@@ -110,4 +115,5 @@ abstract class Routes {
   static const settings = '/settings';
   static const favorites = '/favorites';
   static const chatbot = '/chatbot';
+  static const ocrList = '/ocr-list';
 }

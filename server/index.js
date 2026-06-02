@@ -11,7 +11,10 @@ const Category = require('./models/Category');
 const Cart = require('./models/Cart');
 
 const Order = require('./models/Order');
+const OcrDocument = require('./models/OcrDocument');
 const auth = require('./middleware/auth');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const aiService = require('./services/aiService');
 const { generateInvoicePDF } = require('./services/pdfService');
 const { sendInvoiceEmail } = require('./services/emailService');
@@ -1245,6 +1248,42 @@ io.on('connection', (socket) => {
         console.log(`User disconnected: ${socket.user._id}`);
     });
 });
+
+// --- OCR APIs ---
+
+// Process image and extract OCR data
+app.post('/api/ocr', auth, async (req, res) => {
+    try {
+        const extractedData = req.body; // Expecting raw JSON from the mobile app
+
+        if (!extractedData || Object.keys(extractedData).length === 0) {
+            return res.status(400).json({ message: 'No data provided' });
+        }
+
+        // Save to DB
+        const ocrDoc = new OcrDocument({
+            data: extractedData,
+            rawText: JSON.stringify(extractedData)
+        });
+        await ocrDoc.save();
+
+        res.status(200).json(ocrDoc);
+    } catch (error) {
+        console.error('OCR API Error:', error);
+        res.status(500).json({ error: error.message || 'Failed to save OCR data' });
+    }
+});
+
+// Get OCR history
+app.get('/api/ocr', auth, async (req, res) => {
+    try {
+        const docs = await OcrDocument.find().sort({ createdAt: -1 });
+        res.status(200).json(docs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

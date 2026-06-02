@@ -40,6 +40,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     if (user?.role == 'owner' || user?.role == 'super_admin' || user?.role == 'staff') {
       _orderedIds.add('analytics');
     }
+    _orderedIds.add('ocr');
     _orderedIds.addAll(['profile', 'settings', 'chat']);
   }
 
@@ -168,6 +169,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       case 'suggest': return _buildDashBox(ValueKey(id), context, 'Suggest'.tr, Icons.lightbulb, const Color(0xFFEAB308), () => Get.toNamed(Routes.suggestProduct));
       case 'review': return _buildDashBox(ValueKey(id), context, 'Review'.tr, Icons.rate_review, const Color(0xFFEAB308), () => Get.toNamed(Routes.reviewSuggestions));
       case 'analytics': return _buildDashBox(ValueKey(id), context, 'Analytics'.tr, Icons.insights, const Color(0xFF3B82F6), () => Get.toNamed(Routes.analytics));
+      case 'ocr': return _buildDashBox(ValueKey(id), context, 'Scan Doc'.tr, Icons.document_scanner, const Color(0xFF4ADE80), () => Get.toNamed(Routes.ocrList));
       case 'profile': return _buildDashBox(ValueKey(id), context, 'Profile'.tr, Icons.person, const Color(0xFF6366F1), () => Get.toNamed(Routes.profile));
       case 'settings': return _buildDashBox(ValueKey(id), context, 'Settings'.tr, Icons.settings, const Color(0xFF64748B), () => Get.toNamed(Routes.settings));
       case 'chat': return _buildDashBox(ValueKey(id), context, 'Chat'.tr, Icons.chat, const Color(0xFF14B8A6), () async {
