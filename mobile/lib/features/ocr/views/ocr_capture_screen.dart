@@ -77,7 +77,7 @@ class _OcrCaptureScreenState extends ConsumerState<OcrCaptureScreen> {
                 child: Image.file(
                   File(_imageFile!.path),
                   height: 300,
-                  width: double.infinity,
+                  width: MediaQuery.of(context).size.width,
                   fit: BoxFit.cover,
                 ),
               ),
