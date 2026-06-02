@@ -66,7 +66,6 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   reorderable_grid_view: ^2.2.8
   image_picker: ^1.2.2
-  google_mlkit_text_recognition: ^0.15.1
 
 dev_dependencies:
   flutter_test:

@@ -15,7 +15,9 @@ const OcrDocument = require('./models/OcrDocument');
 const auth = require('./middleware/auth');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const emailService = require('./services/emailService');
 const aiService = require('./services/aiService');
+const ocrService = require('./services/ocrService');
 const { generateInvoicePDF } = require('./services/pdfService');
 const { sendInvoiceEmail } = require('./services/emailService');
 
@@ -1252,13 +1254,16 @@ io.on('connection', (socket) => {
 // --- OCR APIs ---
 
 // Process image and extract OCR data
-app.post('/api/ocr', auth, async (req, res) => {
+app.post('/api/ocr', auth, upload.single('image'), async (req, res) => {
     try {
-        const extractedData = req.body; // Expecting raw JSON from the mobile app
-
-        if (!extractedData || Object.keys(extractedData).length === 0) {
-            return res.status(400).json({ message: 'No data provided' });
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image provided' });
         }
+
+        const imageBuffer = req.file.buffer;
+
+        // Use backend Tesseract service to extract form data
+        const extractedData = await ocrService.extractFormData(imageBuffer);
 
         // Save to DB
         const ocrDoc = new OcrDocument({
@@ -1270,7 +1275,7 @@ app.post('/api/ocr', auth, async (req, res) => {
         res.status(200).json(ocrDoc);
     } catch (error) {
         console.error('OCR API Error:', error);
-        res.status(500).json({ error: error.message || 'Failed to save OCR data' });
+        res.status(500).json({ error: error.message || 'Failed to process image' });
     }
 });
 

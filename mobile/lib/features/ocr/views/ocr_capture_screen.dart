@@ -88,7 +88,7 @@ class _OcrCaptureScreenState extends ConsumerState<OcrCaptureScreen> {
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 const Text(
-                  'Extracting text locally... Please wait.',
+                  'Uploading and processing document...',
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
